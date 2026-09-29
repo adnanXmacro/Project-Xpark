@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<selector xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- Selected tab follows the user's accent color, not a fixed red. -->
+    <item android:state_selected="true" android:color="?attr/accent" />
+    <item android:color="@color/nav_inactive" />
+</selector>

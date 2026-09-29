@@ -1,0 +1,286 @@
+package com.sparktube.app.ui
+
+import android.content.Intent
+import android.content.pm.PackageManager
+import android.os.Build
+import android.os.Bundle
+import android.os.Handler
+import android.os.Looper
+import android.view.View
+import android.widget.Toast
+import androidx.appcompat.app.AppCompatActivity
+import androidx.core.app.ActivityCompat
+import androidx.core.content.ContextCompat
+import androidx.core.view.isVisible
+import androidx.fragment.app.Fragment
+import androidx.lifecycle.lifecycleScope
+import com.sparktube.app.BuildConfig
+import com.sparktube.app.R
+import com.sparktube.app.databinding.ActivityMainBinding
+import com.sparktube.app.playback.PlaybackCenter
+import com.sparktube.app.ui.home.HomeFragment
+import com.sparktube.app.ui.library.LibraryFragment
+import com.sparktube.app.ui.menu.MenuFragment
+import com.sparktube.app.ui.music.MusicFragment
+import com.sparktube.app.ui.music.NowPlayingActivity
+import com.sparktube.app.ui.player.PlayerActivity
+import com.sparktube.app.util.AppPrefs
+import com.sparktube.app.util.Themes
+import com.sparktube.app.util.UpdateChecker
+import com.sparktube.app.util.Thumbs
+import coil.load
+import kotlinx.coroutines.launch
+
+class MainActivity : AppCompatActivity() {
+
+    private lateinit var binding: ActivityMainBinding
+
+    private var selectedId: Int = R.id.navHome
+    private val fragments = mutableMapOf<Int, Fragment>()
+    private var lastBackPress = 0L
+
+    private val progressHandler = Handler(Looper.getMainLooper())
+
+    private val playbackListener = object : PlaybackCenter.Listener {
+        override fun onItemChanged(entry: com.sparktube.app.playback.QueueEntry?) = updateMiniPlayer()
+
+        override fun onPlaybackStateChanged(isPlaying: Boolean) = updateMiniPlayer()
+
+        override fun onQueueChanged() = updateMiniPlayer()
+
+        override fun onAudioOnlyChanged(audioOnly: Boolean) = updateMiniPlayer()
+
+        override fun onFavoriteChanged(url: String, isFavorite: Boolean) = updateMiniPlayer()
+    }
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        Themes.apply(this)
+        super.onCreate(savedInstanceState)
+        binding = ActivityMainBinding.inflate(layoutInflater)
+        setContentView(binding.root)
+
+        if (savedInstanceState != null) {
+            selectedId = savedInstanceState.getInt(STATE_SELECTED, R.id.navHome)
+            // Re-attach fragments that survived a configuration change.
+            NAV_IDS.forEach { id ->
+                supportFragmentManager.findFragmentByTag(tagOf(id))?.let {
+                    fragments[id] = it
+                }
+            }
+        }
+
+        requestNotificationPermissionIfNeeded()
+        silentlyCheckForUpdate()
+
+        binding.navHome.setOnClickListener { select(R.id.navHome) }
+        binding.navMusic.setOnClickListener { select(R.id.navMusic) }
+        binding.navLibrary.setOnClickListener { select(R.id.navLibrary) }
+        binding.navMenu.setOnClickListener { select(R.id.navMenu) }
+
+        // Rounded corners for the live video / artwork box of the mini player.
+        binding.miniMedia.clipToOutline = true
+        binding.miniMedia.outlineProvider = object : android.view.ViewOutlineProvider() {
+            override fun getOutline(view: View, outline: android.graphics.Outline) {
+                outline.setRoundRect(0, 0, view.width, view.height, 12f * resources.displayMetrics.density)
+            }
+        }
+
+        binding.miniPlayPause.setOnClickListener { PlaybackCenter.togglePlayPause() }
+        binding.miniClose.setOnClickListener {
+            PlaybackCenter.stopPlayback()
+        }
+        binding.miniPlayer.setOnClickListener {
+            val entry = PlaybackCenter.currentEntry ?: return@setOnClickListener
+            if (PlaybackCenter.mode == PlaybackCenter.Mode.AUDIO) {
+                NowPlayingActivity.start(this)
+            } else {
+                PlayerActivity.startResume(this)
+            }
+        }
+
+        applySelection()
+    }
+
+    override fun onSaveInstanceState(outState: Bundle) {
+        super.onSaveInstanceState(outState)
+        outState.putInt(STATE_SELECTED, selectedId)
+    }
+
+    override fun onResume() {
+        super.onResume()
+        // A theme / accent change while we were paused: re-style ourselves.
+        if (Themes.recreateIfNeeded(this)) return
+        PlaybackCenter.addListener(playbackListener)
+        bindMiniPlayer()
+    }
+
+    override fun onPause() {
+        super.onPause()
+        PlaybackCenter.removeListener(playbackListener)
+        progressHandler.removeCallbacksAndMessages(null)
+        // Hand the video surface over to whoever is coming on top.
+        PlaybackCenter.detachView(binding.miniVideo)
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        PlaybackCenter.removeListener(playbackListener)
+    }
+
+    /** Background update check on every app open; popup only when needed. */
+    private fun silentlyCheckForUpdate() {
+        if (BuildConfig.DEBUG) return
+        if (UpdateChecker.silentCheckDone) return
+        UpdateChecker.silentCheckDone = true
+        lifecycleScope.launch {
+            val release = UpdateChecker.fetchLatest() ?: return@launch
+            if (UpdateChecker.isNewer(BuildConfig.VERSION_NAME, release.tag)) {
+                val body = release.body.ifBlank {
+                    "Version ${release.tag.removePrefix("v")} is available."
+                }
+                androidx.appcompat.app.AlertDialog.Builder(this@MainActivity)
+                    .setTitle(
+                        getString(R.string.update_available_title) +
+                            " · ${release.tag.removePrefix("v")}"
+                    )
+                    .setMessage(body)
+                    .setPositiveButton(R.string.update_download) { _, _ ->
+                        UpdateChecker.openDownload(this@MainActivity, release)
+                    }
+                    .setNegativeButton(R.string.later, null)
+                    .show()
+            }
+        }
+    }
+
+    /** Android 13+: media notification (background playback controls) needs this. */
+    private fun requestNotificationPermissionIfNeeded() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&
+            ContextCompat.checkSelfPermission(this, android.Manifest.permission.POST_NOTIFICATIONS) !=
+            PackageManager.PERMISSION_GRANTED
+        ) {
+            ActivityCompat.requestPermissions(
+                this,
+                arrayOf(android.Manifest.permission.POST_NOTIFICATIONS),
+                REQ_NOTIFICATIONS
+            )
+        }
+    }
+
+    override fun onRequestPermissionsResult(
+        requestCode: Int,
+        permissions: Array<out String>,
+        grantResults: IntArray
+    ) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
+        // Notification permission is optional: playback works either way.
+    }
+
+    private fun bindMiniPlayer() {
+        val hasMedia = PlaybackCenter.hasMedia && !PlaybackCenter.inPip
+        binding.miniPlayer.isVisible = hasMedia
+        if (!hasMedia) {
+            PlaybackCenter.detachView(binding.miniVideo)
+            return
+        }
+        if (PlaybackCenter.mode == PlaybackCenter.Mode.VIDEO && !PlaybackCenter.audioOnlyMode) {
+            // Live video surface in the mini player, like YouTube: a 16:9
+            // box that the picture fills completely (no black bars).
+            setMiniMediaWidth(wide = true)
+            binding.miniThumb.isVisible = false
+            binding.miniVideo.isVisible = true
+            PlaybackCenter.attachView(binding.miniVideo)
+        } else {
+            PlaybackCenter.detachView(binding.miniVideo)
+            setMiniMediaWidth(wide = false)
+            binding.miniVideo.isVisible = false
+            binding.miniThumb.isVisible = true
+        }
+        updateMiniPlayer()
+    }
+
+    private fun setMiniMediaWidth(wide: Boolean) {
+        val width = ((if (wide) 92 else 52) * resources.displayMetrics.density).toInt()
+        val lp = binding.miniMedia.layoutParams
+        if (lp.width != width) {
+            lp.width = width
+            binding.miniMedia.layoutParams = lp
+        }
+    }
+
+    private fun updateMiniPlayer() {
+        if (isFinishing || isDestroyed) return
+        val entry = PlaybackCenter.currentEntry
+        val show = entry != null && !PlaybackCenter.inPip
+        binding.miniPlayer.isVisible = show
+        if (entry == null) return
+
+        binding.miniTitle.text = entry.title
+        binding.miniTitle.isSelected = true
+        binding.miniSubtitle.text = entry.uploader
+        Thumbs.load(binding.miniThumb, entry.thumbnailUrl)
+        binding.miniPlayPause.setImageResource(
+            if (PlaybackCenter.isPlaying) R.drawable.ic_pause else R.drawable.ic_play_arrow
+        )
+    }
+
+    private fun select(id: Int) {
+        if (id == selectedId) return
+        selectedId = id
+        applySelection()
+    }
+
+    private fun applySelection() {
+        val fm = supportFragmentManager
+        val tx = fm.beginTransaction()
+        if (AppPrefs.animations) {
+            // Gentle cross-fade + slide-up on the incoming tab.
+            tx.setCustomAnimations(
+                R.anim.tab_enter, R.anim.tab_exit,
+                R.anim.tab_enter, R.anim.tab_exit
+            )
+        }
+        fragments.values.forEach { tx.hide(it) }
+        val target = fragments[selectedId] ?: createFragment(selectedId).also {
+            fragments[selectedId] = it
+            tx.add(R.id.container, it, tagOf(selectedId))
+        }
+        tx.show(target)
+        tx.commit()
+
+        val isActive = { view: View -> view.id == selectedId }
+        binding.navHome.isSelected = isActive(binding.navHome)
+        binding.navMusic.isSelected = isActive(binding.navMusic)
+        binding.navLibrary.isSelected = isActive(binding.navLibrary)
+        binding.navMenu.isSelected = isActive(binding.navMenu)
+    }
+
+    private fun createFragment(id: Int): Fragment = when (id) {
+        R.id.navHome -> HomeFragment()
+        R.id.navMusic -> MusicFragment()
+        R.id.navLibrary -> LibraryFragment()
+        else -> MenuFragment()
+    }
+
+    @Deprecated("Deprecated in Java")
+    override fun onBackPressed() {
+        if (selectedId != R.id.navHome) {
+            select(R.id.navHome)
+            return
+        }
+        val now = System.currentTimeMillis()
+        if (now - lastBackPress < 2000L) {
+            super.onBackPressed()
+        } else {
+            lastBackPress = now
+            Toast.makeText(this, R.string.press_back_again, Toast.LENGTH_SHORT).show()
+        }
+    }
+
+    companion object {
+        private const val STATE_SELECTED = "selected_nav"
+        private const val REQ_NOTIFICATIONS = 4711
+        private val NAV_IDS = intArrayOf(R.id.navHome, R.id.navMusic, R.id.navLibrary, R.id.navMenu)
+        private fun tagOf(id: Int) = "frag_$id"
+    }
+}

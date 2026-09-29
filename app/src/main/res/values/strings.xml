@@ -1,0 +1,308 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">SparkTube</string>
+
+    <!-- Onboarding -->
+    <string name="onboarding_title">Choose your country / region</string>
+    <string name="onboarding_subtitle">Your home feed suggests videos based on the selected region. You can change this anytime from the Menu tab.</string>
+    <string name="search_country_hint">Search country</string>
+    <string name="continue_label">Continue</string>
+    <string name="welcome_toast">Region set to %1$s %2$s</string>
+
+    <!-- Main tabs -->
+    <string name="tab_home">Home</string>
+    <string name="tab_music">Music</string>
+    <string name="tab_library">Library</string>
+    <string name="tab_menu">Menu</string>
+    <string name="press_back_again">Press back again to exit</string>
+
+    <!-- Home -->
+    <string name="search_hint">Search videos</string>
+    <string name="search_music_hint">Search songs</string>
+    <string name="trending_in">Suggested in %1$s %2$s</string>
+    <string name="crash_test_desc">Test crash</string>
+
+    <!-- Library -->
+    <string name="tab_history">History</string>
+    <string name="tab_favorites">Favorites</string>
+    <string name="tab_subscriptions">Subscriptions</string>
+    <string name="tab_downloads">Downloads</string>
+    <string name="empty_history">Videos you watch will show up here</string>
+    <string name="empty_favorites">Tap the heart while playing a video to save it here</string>
+    <string name="empty_subscriptions">Subscribe to channels from a video page to see them here</string>
+    <string name="empty_downloads">Downloads you start will show up here</string>
+    <string name="removed_from_history">Removed from history</string>
+    <string name="removed_from_favorites">Removed from favorites</string>
+    <string name="added_to_favorites">Added to favorites</string>
+
+    <!-- Menu -->
+    <string name="country_region">Country / Region</string>
+    <string name="change_country">Choose your country / region</string>
+    <string name="country_changed">Region changed to %1$s</string>
+    <string name="clear_history">Clear watch history</string>
+    <string name="clear_history_confirm">Remove all watched videos from history?</string>
+    <string name="history_cleared">Watch history cleared</string>
+    <string name="clear_search_history">Clear search history</string>
+    <string name="clear_search_history_confirm">Remove all recent searches?</string>
+    <string name="search_history_cleared">Search history cleared</string>
+    <string name="clear_favorites">Clear favorites</string>
+    <string name="clear_favorites_confirm">Remove all favorite videos?</string>
+    <string name="favorites_cleared">Favorites cleared</string>
+    <string name="about">About</string>
+    <string name="about_text">SparkTube is a lightweight YouTube client for Android, built with Kotlin and NewPipeExtractor. It shows country-based video suggestions and never displays live streams. This project is for educational purposes and is not affiliated with YouTube or Google.</string>
+    <string name="github">GitHub</string>
+    <string name="version_fmt">Version %1$s</string>
+
+    <!-- Player / errors -->
+    <string name="live_not_supported">Live streams are not shown in SparkTube</string>
+    <string name="error_no_results">No videos found</string>
+    <string name="error_no_songs">No songs found</string>
+    <string name="error_no_streams">This video cannot be played</string>
+    <string name="retry">Retry</string>
+
+    <!-- Player actions -->
+    <string name="action_favorite">Favorite</string>
+    <string name="saved_short">Saved</string>
+    <string name="action_share">Share</string>
+    <string name="action_download">Download</string>
+    <string name="action_background">Background play</string>
+    <string name="action_pip">Picture in picture</string>
+    <string name="action_speed">Playback speed</string>
+    <string name="action_quality">Quality</string>
+    <string name="action_audio_track">Audio track</string>
+    <string name="quality_auto">Auto (best available)</string>
+    <string name="quality_audio_only">Audio only</string>
+    <string name="speed_label">Playback speed</string>
+    <string name="audio_track_label">Audio track</string>
+    <string name="quality_label">Video quality</string>
+    <string name="subscribers_fmt">%1$s subscribers</string>
+    <string name="views_fmt">%1$s views</string>
+    <string name="related_videos">Related</string>
+    <string name="subscribe">SUBSCRIBE</string>
+    <string name="subscribed">SUBSCRIBED</string>
+    <string name="subscribed_toast">Subscribed</string>
+    <string name="unsubscribed_toast">Unsubscribed</string>
+    <string name="background_started">Playing in background</string>
+    <string name="pip_unsupported">Picture in picture is not supported on this device</string>
+    <string name="share_via">Share video via</string>
+
+    <!-- Downloads -->
+    <string name="download_started">Download started</string>
+    <string name="download_audio_section">Audio only</string>
+    <string name="download_video_section">Video only</string>
+    <string name="download_av_section">Video + Audio</string>
+    <string name="download_pair_note">Downloads the video and audio tracks as a pair — they play together in SparkTube</string>
+    <string name="download_muxed_note">Best quality (video + audio in one file, plays in any player)</string>
+    <string name="download_delete_confirm">Delete this download?</string>
+    <string name="download_deleted">Download deleted</string>
+    <string name="download_status_pending">Waiting</string>
+    <string name="download_status_running">Downloading</string>
+    <string name="download_status_done">Completed</string>
+    <string name="download_status_failed">Failed</string>
+    <string name="download_type_audio">Audio</string>
+    <string name="download_type_video">Video</string>
+    <string name="download_type_av">Video + Audio</string>
+
+    <!-- Music -->
+    <string name="music_trending_shelf">Trending now</string>
+    <string name="music_popular_section">Popular right now</string>
+    <string name="music_genres_section">Browse genres</string>
+    <string name="start_radio">Start radio</string>
+    <string name="radio_started">Radio started</string>
+    <string name="now_playing">Now playing</string>
+    <string name="cd_back">Back</string>
+    <string name="cd_previous">Previous</string>
+    <string name="cd_next">Next</string>
+    <string name="cd_play">Play</string>
+    <string name="cd_pause">Pause</string>
+
+    <!-- Channel -->
+    <string name="channel_videos">Videos</string>
+
+    <string name="action_fullscreen">Fullscreen</string>
+    <string name="action_scale_mode">Video scale mode</string>
+    <string name="scale_fit">Fit — whole video visible</string>
+    <string name="scale_crop">Crop — fills the screen</string>
+    <string name="scale_stretch">Stretch — fill screen, may distort</string>
+    <string name="video_settings">Video settings</string>
+    <string name="settings_quality_section">Quality</string>
+    <string name="settings_speed_section">Playback speed</string>
+    <string name="settings_audio_track_section">Audio track</string>
+    <string name="quality_auto_short">Auto</string>
+    <string name="speed_normal">Normal</string>
+    <string name="audio_track_original">original</string>
+    <string name="audio_track_switched_to">Audio track: %1$s</string>
+
+    <!-- Common -->
+    <string name="ok">OK</string>
+    <string name="cancel">Cancel</string>
+    <string name="on">On</string>
+    <string name="off">Off</string>
+
+    <!-- Search tabs + upload date filters -->
+    <string name="search_tab_videos">Videos</string>
+    <string name="search_tab_channels">Channels</string>
+    <string name="search_filters">Filters</string>
+    <string name="filter_any">Any time</string>
+    <string name="filter_today">Today</string>
+    <string name="filter_this_week">This week</string>
+    <string name="filter_this_month">This month</string>
+    <string name="error_no_channels">No channels found</string>
+
+    <!-- Menu -->
+    <string name="menu_join_telegram">Join Telegram</string>
+
+    <!-- Settings submenus -->
+    <string name="menu_settings">Settings</string>
+    <string name="settings_theme">Theme</string>
+    <string name="theme_auto">Auto (system)</string>
+    <string name="theme_dark">Dark</string>
+    <string name="theme_light">Light</string>
+    <string name="theme_pitch_black">Pitch black</string>
+    <string name="settings_accent">Accent color</string>
+    <string name="settings_animations">Animations</string>
+    <string name="accent_red">Spark red</string>
+    <string name="accent_blue">Blue</string>
+    <string name="accent_purple">Purple</string>
+    <string name="accent_green">Spotify green</string>
+    <string name="accent_orange">Orange</string>
+    <string name="accent_pink">Pink</string>
+    <string name="accent_teal">Teal</string>
+    <string name="menu_video_settings">Video settings</string>
+    <string name="settings_default_quality">Default video quality</string>
+    <string name="settings_default_quality_wifi">Default video quality (Wi-Fi)</string>
+    <string name="settings_default_quality_data">Default video quality (mobile data)</string>
+    <string name="settings_autoplay_next_video">Autoplay next video</string>
+    <string name="settings_smart_streaming">Smart streaming (instant start, adaptive quality)</string>
+    <string name="menu_music_settings">Music settings</string>
+    <string name="settings_audio_quality">Audio quality</string>
+    <string name="quality_high">High (best bitrate)</string>
+    <string name="quality_medium">Medium</string>
+    <string name="quality_low">Low (data saver)</string>
+    <string name="settings_autoplay_next_song">Autoplay next song</string>
+    <string name="default_quality_note">Used when a video starts; if the selected quality is not available the next lower one is played</string>
+
+    <!-- Crash logs (local, Firebase-free crash reporting) -->
+    <string name="settings_crash_logs">Crash logs</string>
+    <string name="crash_logs_location_hint">Crash logs are saved as plain-text files in the SparkTube folder on your device</string>
+    <string name="crash_logs_empty">No crash logs yet. If the app ever crashes, a report will appear here automatically.</string>
+    <string name="crash_log_share">Share crash log</string>
+    <string name="crash_logs_share_all">Share all logs</string>
+    <string name="crash_logs_delete_all">Delete all logs</string>
+    <string name="crash_logs_delete_confirm">Delete all saved crash log files from the device?</string>
+    <string name="crash_logs_deleted">Deleted %1$d crash logs</string>
+
+    <!-- Clear data submenu -->
+    <string name="menu_clear_data">Clear data</string>
+    <string name="clear_music_history">Clear music history</string>
+    <string name="clear_music_history_confirm">Remove all played songs from the music history?</string>
+    <string name="music_history_cleared">Music history cleared</string>
+    <string name="clear_subscriptions">Clear subscriptions</string>
+    <string name="clear_subscriptions_confirm">Unsubscribe from all channels?</string>
+    <string name="subscriptions_cleared">Subscriptions cleared</string>
+    <string name="clear_downloads">Clear downloads</string>
+    <string name="clear_downloads_confirm">Delete all downloaded files and records?</string>
+    <string name="downloads_cleared">Downloads cleared</string>
+    <string name="clear_recommendations">Reset recommendations</string>
+    <string name="clear_recommendations_confirm">Reset the on-device recommendation profile?</string>
+    <string name="recommendations_cleared">Recommendations reset</string>
+
+    <!-- Import / export -->
+    <string name="menu_backup_restore">Backup &amp; restore</string>
+    <string name="menu_import">Import data</string>
+    <string name="menu_export">Export data</string>
+    <string name="import_done">Data imported</string>
+    <string name="import_failed">Import failed</string>
+    <string name="export_done">Backup saved</string>
+    <string name="export_failed">Export failed</string>
+
+    <!-- Updates -->
+    <string name="menu_check_update">Check for update</string>
+    <string name="checking_update">Checking for updates…</string>
+    <string name="up_to_date">You are on the latest version</string>
+    <string name="update_available_title">Update available</string>
+    <string name="update_download">Download update</string>
+    <string name="later">Later</string>
+    <string name="update_check_failed">Could not check for updates</string>
+
+    <!-- Music favourites / downloads -->
+    <string name="music_favorites">Favorites</string>
+    <string name="music_downloads">Downloads</string>
+    <string name="empty_music_favorites">Songs you favorite will show up here</string>
+    <string name="empty_music_downloads">Music you download will show up here</string>
+
+    <!-- Download state on player pages -->
+    <string name="downloaded_label">Downloaded</string>
+    <string name="already_downloaded">Already downloaded — see your downloads list</string>
+    <string name="downloading_fmt">Downloading • %1$d%%</string>
+    <string name="download_option_done">Downloaded</string>
+
+    <!-- Playlists -->
+    <string name="tab_playlists">Playlists</string>
+    <string name="action_playlist">Add to playlist</string>
+    <string name="playlist_sheet_title">Add to playlist</string>
+    <string name="playlist_sheet_empty">No playlists yet — create one to start organizing videos</string>
+    <string name="new_playlist">New playlist</string>
+    <string name="new_playlist_hint">Playlist name</string>
+    <string name="create_playlist">Create</string>
+    <string name="playlist_name_empty">Please enter a playlist name</string>
+    <string name="playlist_name_exists">A playlist with this name already exists</string>
+    <string name="playlist_added">Added</string>
+    <string name="saved_to_playlist_fmt">Saved to %1$s</string>
+    <string name="removed_from_playlist_fmt">Removed from %1$s</string>
+    <string name="removed_from_playlist">Removed from playlist</string>
+    <string name="remove_from_playlist_confirm">Remove this video from the playlist?</string>
+    <string name="empty_playlists">Use the Add to playlist button on any video to build your first playlist</string>
+    <string name="empty_playlist_videos">No videos in this playlist yet</string>
+    <string name="delete_playlist_confirm">Delete this playlist?</string>
+    <string name="playlist_deleted">Playlist deleted</string>
+    <string name="play_all">Play all</string>
+
+    <plurals name="playlist_video_count">
+        <item quantity="one">%1$d video</item>
+        <item quantity="other">%1$d videos</item>
+    </plurals>
+
+    <!-- Watch page: description + comments -->
+    <string name="desc_show_more">Show more</string>
+    <string name="desc_show_less">Show less</string>
+    <string name="desc_empty">No description</string>
+    <string name="comments_title">Comments</string>
+    <string name="comments_count_fmt">%1$s comments</string>
+    <string name="comments_loading">Loading comments…</string>
+    <string name="comments_disabled">Comments are turned off for this video</string>
+    <string name="comments_empty">No comments yet</string>
+    <string name="comments_error">Couldn\'t load comments. Tap to retry.</string>
+    <string name="comments_pinned">Pinned</string>
+    <string name="comments_replies_fmt">%1$d replies</string>
+    <string name="comments_reply_one">1 reply</string>
+    <string name="comments_view_replies_fmt">View %1$d replies</string>
+    <string name="comments_view_reply_one">View 1 reply</string>
+    <string name="comments_hide_replies">Hide replies</string>
+    <string name="comments_replies_loading">Loading replies…</string>
+    <string name="comments_more_replies">Show more replies</string>
+    <string name="comments_replies_error">Couldn\'t load replies. Try again.</string>
+    <string name="cd_close">Close</string>
+
+    <!-- Music: modern home + queue -->
+    <string name="greeting_morning">Good morning</string>
+    <string name="greeting_afternoon">Good afternoon</string>
+    <string name="greeting_evening">Good evening</string>
+    <string name="greeting_night">Good night</string>
+    <string name="music_home_subtitle">What do you want to listen to?</string>
+    <string name="music_search_field">Search songs, artists…</string>
+    <string name="cd_play_song">Play</string>
+    <string name="queue_title">Up next</string>
+    <string name="queue_radio_badge">Radio</string>
+    <string name="queue_now_playing">Now playing</string>
+    <string name="queue_loading">Finding songs for your radio…</string>
+    <string name="queue_songs_fmt">%1$d songs in queue</string>
+    <string name="queue_empty">Nothing queued yet</string>
+    <string name="cd_queue">Queue</string>
+    <string name="up_next_label">Up next</string>
+    <string name="up_next_radio_label">Radio · Up next</string>
+    <string name="playing_from_radio">Playing from radio</string>
+    <string name="playing_from_queue">Playing from your queue</string>
+    <string name="music_play_all">Play all</string>
+    <string name="music_songs_fmt">%1$d songs</string>
+</resources>
