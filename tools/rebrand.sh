@@ -6,12 +6,14 @@ set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 STRINGS="$ROOT/app/src/main/res/values/strings.xml"
 SETTINGS="$ROOT/settings.gradle.kts"
+MENU="$ROOT/app/src/main/java/com/sparktube/app/ui/menu/MenuFragment.kt"
+MENU_LAYOUT="$ROOT/app/src/main/res/layout/fragment_menu.xml"
 
-python3 - "$STRINGS" "$SETTINGS" <<'PY'
+python3 - "$STRINGS" "$SETTINGS" "$MENU" "$MENU_LAYOUT" <<'PY'
 import re
 import sys
 
-strings_path, settings_path = sys.argv[1], sys.argv[2]
+strings_path, settings_path, menu_path, layout_path = sys.argv[1:5]
 
 replacements = {
     "app_name": "Open Tube by project Adnan",
@@ -25,6 +27,7 @@ replacements = {
     "download_pair_note": (
         "Downloads the video and audio tracks as a pair — they play together in Open Tube"
     ),
+    "menu_join_telegram": "Help Line",
 }
 
 text = open(strings_path, encoding="utf-8").read()
@@ -52,5 +55,22 @@ settings, n = re.subn(
 if n != 1:
     raise SystemExit("could not patch settings.gradle.kts")
 open(settings_path, "w", encoding="utf-8").write(settings)
+
+menu = open(menu_path, encoding="utf-8").read()
+menu = menu.replace("TELEGRAM_URL", "HELP_LINE_URL")
+menu, n = re.subn(
+    r'https://t\.me/[A-Za-z0-9_]+',
+    "https://discord.gg/tY4jGUJ4",
+    menu,
+    count=1,
+)
+if "https://discord.gg/tY4jGUJ4" not in menu:
+    raise SystemExit("could not patch MenuFragment help URL")
+open(menu_path, "w", encoding="utf-8").write(menu)
+
+layout = open(layout_path, encoding="utf-8").read()
+layout = layout.replace("@drawable/ic_telegram", "@drawable/ic_info")
+layout = layout.replace('app:tint="#229ED9"', 'app:tint="?attr/accent"')
+open(layout_path, "w", encoding="utf-8").write(layout)
 print("Open Tube branding overlay applied.")
 PY

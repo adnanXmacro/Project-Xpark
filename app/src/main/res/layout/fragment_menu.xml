@@ -319,8 +319,8 @@
                     android:layout_width="24dp"
                     android:layout_height="24dp"
                     android:importantForAccessibility="no"
-                    android:src="@drawable/ic_telegram"
-                    app:tint="#229ED9" />
+                    android:src="@drawable/ic_info"
+                    app:tint="?attr/accent" />
 
                 <TextView
                     android:layout_width="0dp"

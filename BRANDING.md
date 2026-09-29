@@ -25,10 +25,13 @@ Build Open Tube yourself after each merge.
 
 ## Overlay scope
 
+README display name and clone/download links are maintained in this fork's README.
+
 `tools/rebrand.sh` only patches:
 
 - launcher / about name
 - a few user-facing "SparkTube" strings
+- Help Line label + Discord invite
 - Gradle `rootProject.name`
 
 It does not rename Kotlin packages, theme style names, crash-log folder, or the updater URL.

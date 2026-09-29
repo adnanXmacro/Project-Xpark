@@ -71,7 +71,7 @@ class MenuFragment : Fragment() {
                 startActivity(
                     android.content.Intent(
                         android.content.Intent.ACTION_VIEW,
-                        Uri.parse(TELEGRAM_URL)
+                        Uri.parse(HELP_LINE_URL)
                     )
                 )
             }
@@ -300,7 +300,6 @@ class MenuFragment : Fragment() {
     }
 
     private companion object {
-        /** Community link shown as its own menu card. */
-        const val TELEGRAM_URL = "https://t.me/projectredfox"
+        const val HELP_LINE_URL = "https://discord.gg/tY4jGUJ4"
     }
 }

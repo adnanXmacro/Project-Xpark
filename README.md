@@ -1,15 +1,15 @@
 <div align="center">
 
-# ⚡ SparkTube
+# Open Tube
 
-**A lightweight, fully anonymous YouTube client for Android — built with Kotlin & NewPipeExtractor.**
+**Open Tube by project Adnan** — a lightweight, fully anonymous YouTube client for Android, based on SparkTube. Built with Kotlin & NewPipeExtractor.
 
 No Google account. No API keys. No tracking. No live streams.
 
 <br>
 
-[![Total Downloads](https://img.shields.io/github/downloads/devfahim00/SparkTube/total?style=for-the-badge&logo=github&label=Total%20Downloads&color=success)](https://github.com/devfahim00/SparkTube/releases)
-[![Latest Release](https://img.shields.io/github/v/release/devfahim00/SparkTube?style=for-the-badge&logo=github&label=Latest%20Release&color=blue)](https://github.com/devfahim00/SparkTube/releases/latest)
+[![Total Downloads](https://img.shields.io/github/downloads/adnanXmacro/Project-Xpark/total?style=for-the-badge&logo=github&label=Total%20Downloads&color=success)](https://github.com/adnanXmacro/Project-Xpark/releases)
+[![Latest Release](https://img.shields.io/github/v/release/adnanXmacro/Project-Xpark?style=for-the-badge&logo=github&label=Latest%20Release&color=blue)](https://github.com/adnanXmacro/Project-Xpark/releases/latest)
 
 <br>
 
@@ -19,11 +19,11 @@ No Google account. No API keys. No tracking. No live streams.
 [![Gradle](https://img.shields.io/badge/Gradle-02303A?style=for-the-badge&logo=gradle&logoColor=white)](https://gradle.org/)
 [![JDK 17](https://img.shields.io/badge/JDK-17-ED8B00?style=for-the-badge&logo=openjdk&logoColor=white)](https://adoptium.net/)
 
-[![GitHub stars](https://img.shields.io/github/stars/devfahim00/SparkTube?style=flat-square&logo=github&color=yellow)](https://github.com/devfahim00/SparkTube/stargazers)
-[![GitHub forks](https://img.shields.io/github/forks/devfahim00/SparkTube?style=flat-square&logo=github&color=blue)](https://github.com/devfahim00/SparkTube/network/members)
-[![GitHub issues](https://img.shields.io/github/issues/devfahim00/SparkTube?style=flat-square&logo=github&color=red)](https://github.com/devfahim00/SparkTube/issues)
-[![Last commit](https://img.shields.io/github/last-commit/devfahim00/SparkTube?style=flat-square&logo=git&logoColor=white&color=green)](https://github.com/devfahim00/SparkTube/commits/main)
-[![Repo size](https://img.shields.io/github/repo-size/devfahim00/SparkTube?style=flat-square&color=orange)](https://github.com/devfahim00/SparkTube)
+[![GitHub stars](https://img.shields.io/github/stars/adnanXmacro/Project-Xpark?style=flat-square&logo=github&color=yellow)](https://github.com/adnanXmacro/Project-Xpark/stargazers)
+[![GitHub forks](https://img.shields.io/github/forks/adnanXmacro/Project-Xpark?style=flat-square&logo=github&color=blue)](https://github.com/adnanXmacro/Project-Xpark/network/members)
+[![GitHub issues](https://img.shields.io/github/issues/adnanXmacro/Project-Xpark?style=flat-square&logo=github&color=red)](https://github.com/adnanXmacro/Project-Xpark/issues)
+[![Last commit](https://img.shields.io/github/last-commit/adnanXmacro/Project-Xpark?style=flat-square&logo=git&logoColor=white&color=green)](https://github.com/adnanXmacro/Project-Xpark/commits/main)
+[![Repo size](https://img.shields.io/github/repo-size/adnanXmacro/Project-Xpark?style=flat-square&color=orange)](https://github.com/adnanXmacro/Project-Xpark)
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen?style=flat-square)](#-contributing)
 [![License](https://img.shields.io/badge/License-GPLv3-blue?style=flat-square)](#-license)
 
@@ -64,15 +64,16 @@ No Google account. No API keys. No tracking. No live streams.
 
 ## 📖 About
 
-**SparkTube** is a lightweight YouTube client for Android, written in **Kotlin** and powered by
+**Open Tube by project Adnan** is a lightweight YouTube client for Android, written in **Kotlin**
+and based on [SparkTube](https://github.com/devfahim00/SparkTube). It is powered by
 [NewPipeExtractor](https://github.com/TeamNewPipe/NewPipeExtractor) — the same extraction library
 behind the [NewPipe](https://newpipe.net/) project.
 
 It is designed to be **fully anonymous**: there is no Google account login, no API key requirement,
-and no analytics or tracking of any kind. On first launch, SparkTube asks for your **country / region**
+and no analytics or tracking of any kind. On first launch, Open Tube asks for your **country / region**
 and then tailors trending video suggestions to that region.
 
-SparkTube also **intentionally never shows live streams** — not in the home feed, not in search
+Open Tube also **intentionally never shows live streams** — not in the home feed, not in search
 results, and not in the player — keeping the experience focused purely on on-demand videos.
 
 ---
@@ -121,7 +122,7 @@ results, and not in the player — keeping the experience focused purely on on-d
 [![Coil](https://img.shields.io/badge/Coil-Image%20Loading-FF6F00?style=flat-square)](https://coil-kt.github.io/coil/)
 [![Material 3](https://img.shields.io/badge/Material-3-757575?style=flat-square&logo=materialdesign&logoColor=white)](https://m3.material.io/)
 [![JitPack](https://img.shields.io/badge/JitPack-Dependencies-121212?style=flat-square&logo=jitpack&logoColor=white)](https://jitpack.io/)
-[![GitHub Actions](https://img.shields.io/badge/CI-GitHub%20Actions-2088FF?style=flat-square&logo=githubactions&logoColor=white)](https://github.com/devfahim00/SparkTube/actions)
+[![GitHub Actions](https://img.shields.io/badge/CI-GitHub%20Actions-2088FF?style=flat-square&logo=githubactions&logoColor=white)](https://github.com/adnanXmacro/Project-Xpark/actions)
 
 | Layer | Technology |
 |---|---|
@@ -139,7 +140,7 @@ results, and not in the player — keeping the experience focused purely on on-d
 ## 🗂 Project Structure
 
 ```text
-SparkTube/
+OpenTube/
 ├── .github/
 │   └── workflows/        # CI pipeline — builds a debug APK on every push
 ├── app/                  # Android application module (Kotlin source, resources, manifest)
@@ -163,18 +164,18 @@ Get the latest pre-built APK straight from the **Releases** page — no build re
 
 <div align="center">
 
-[![Download Latest APK](https://img.shields.io/badge/Download-Latest%20APK-3DDC84?style=for-the-badge&logo=android&logoColor=white)](https://github.com/devfahim00/SparkTube/releases/latest)
+[![Download Latest APK](https://img.shields.io/badge/Download-Latest%20APK-3DDC84?style=for-the-badge&logo=android&logoColor=white)](https://github.com/adnanXmacro/Project-Xpark/releases/latest)
 
-[![Total Downloads](https://img.shields.io/github/downloads/devfahim00/SparkTube/total?style=flat-square&logo=github&label=Total%20Downloads&color=success)](https://github.com/devfahim00/SparkTube/releases)
-[![Latest Release Downloads](https://img.shields.io/github/downloads/devfahim00/SparkTube/latest/total?style=flat-square&logo=github&label=Latest%20Release&color=brightgreen)](https://github.com/devfahim00/SparkTube/releases/latest)
-[![Version](https://img.shields.io/github/v/release/devfahim00/SparkTube?style=flat-square&label=Version&color=blue)](https://github.com/devfahim00/SparkTube/releases/latest)
-[![Release Date](https://img.shields.io/github/release-date/devfahim00/SparkTube?style=flat-square&label=Released&color=orange)](https://github.com/devfahim00/SparkTube/releases/latest)
+[![Total Downloads](https://img.shields.io/github/downloads/adnanXmacro/Project-Xpark/total?style=flat-square&logo=github&label=Total%20Downloads&color=success)](https://github.com/adnanXmacro/Project-Xpark/releases)
+[![Latest Release Downloads](https://img.shields.io/github/downloads/adnanXmacro/Project-Xpark/latest/total?style=flat-square&logo=github&label=Latest%20Release&color=brightgreen)](https://github.com/adnanXmacro/Project-Xpark/releases/latest)
+[![Version](https://img.shields.io/github/v/release/adnanXmacro/Project-Xpark?style=flat-square&label=Version&color=blue)](https://github.com/adnanXmacro/Project-Xpark/releases/latest)
+[![Release Date](https://img.shields.io/github/release-date/adnanXmacro/Project-Xpark?style=flat-square&label=Released&color=orange)](https://github.com/adnanXmacro/Project-Xpark/releases/latest)
 
 </div>
 
 **Installation steps**
 
-1. Open the [**latest release**](https://github.com/devfahim00/SparkTube/releases/latest).
+1. Open the [**latest release**](https://github.com/adnanXmacro/Project-Xpark/releases/latest).
 2. Under **Assets**, download the `.apk` file.
 3. On your Android device, allow **Install unknown apps** for your browser or file manager.
 4. Open the downloaded APK and tap **Install**.
@@ -196,8 +197,8 @@ Get the latest pre-built APK straight from the **Releases** page — no build re
 
 ```bash
 # 1. Clone the repository
-git clone https://github.com/devfahim00/SparkTube.git
-cd SparkTube
+git clone https://github.com/adnanXmacro/Project-Xpark.git
+cd Project-Xpark
 
 # 2. Build a debug APK (Linux / macOS)
 ./gradlew assembleDebug
@@ -214,7 +215,7 @@ app/build/outputs/apk/debug/
 
 **Using Android Studio**
 
-1. Open **Android Studio** → **File → Open** and select the `SparkTube` folder.
+1. Open **Android Studio** → **File → Open** and select the `Project-Xpark` folder.
 2. Wait for the Gradle sync to complete (make sure the Gradle JDK is set to **17**).
 3. Connect a device or start an emulator.
 4. Press **Run ▶️**.
@@ -223,14 +224,14 @@ app/build/outputs/apk/debug/
 
 ## 🔐 Privacy
 
-SparkTube is built with privacy as a core principle:
+Open Tube is built with privacy as a core principle:
 
 - ✅ **No Google account** required or supported
 - ✅ **No API keys** — data is fetched through NewPipeExtractor
 - ✅ **No analytics or tracking** libraries
 - ✅ **Local-only storage** — watch history and favorites never leave your device
 - ✅ **Region is just a preference** — used only to tailor trending results
-- ✅ **On-device crash logs** — if SparkTube crashes, a plain-text report is saved to the `SparkTube` folder on your device (no Firebase, nothing is uploaded anywhere). View, share, or delete them anytime from **Settings → Crash logs**
+- ✅ **On-device crash logs** — if Open Tube crashes, a plain-text report is saved to the `SparkTube` folder on your device (no Firebase, nothing is uploaded anywhere). View, share, or delete them anytime from **Settings → Crash logs**
 
 ---
 
@@ -267,7 +268,7 @@ in Android Studio.
 
 <br>
 
-SparkTube requires **JDK 17**. In Android Studio go to
+Open Tube requires **JDK 17**. In Android Studio go to
 **Settings → Build, Execution, Deployment → Build Tools → Gradle** and set **Gradle JDK** to 17.
 
 </details>
@@ -292,7 +293,7 @@ dependency version, and rebuild. Also confirm that your device has internet acce
 
 <br>
 
-No. SparkTube is completely anonymous and uses NewPipeExtractor instead of the official YouTube API.
+No. Open Tube is completely anonymous and uses NewPipeExtractor instead of the official YouTube API.
 
 </details>
 
@@ -324,11 +325,11 @@ Only on your device. Nothing is uploaded or synced anywhere.
 </details>
 
 <details>
-<summary><b>Is SparkTube affiliated with YouTube, Google, or NewPipe?</b></summary>
+<summary><b>Is Open Tube affiliated with YouTube, Google, or NewPipe?</b></summary>
 
 <br>
 
-No. SparkTube is an independent project. See the [Disclaimer](#-disclaimer).
+No. Open Tube is an independent project based on SparkTube. See the [Disclaimer](#-disclaimer).
 
 </details>
 
@@ -356,7 +357,7 @@ Contributions, issues, and feature requests are welcome!
 Please keep code style consistent with the existing Kotlin codebase, and make sure
 `./gradlew assembleDebug` passes before submitting.
 
-Found a bug? [Open an issue](https://github.com/devfahim00/SparkTube/issues/new) with steps to reproduce,
+Found a bug? [Open an issue](https://github.com/adnanXmacro/Project-Xpark/issues/new) with steps to reproduce,
 your device model, and Android version.
 
 ---
@@ -364,7 +365,7 @@ your device model, and Android version.
 ## ⚠️ Disclaimer
 
 > **This project is for educational purposes only.**
-> SparkTube is **not affiliated with, endorsed by, or connected to YouTube or Google** in any way.
+> Open Tube is **not affiliated with, endorsed by, or connected to YouTube or Google** in any way.
 > All trademarks and brand names belong to their respective owners.
 > Please respect the [YouTube Terms of Service](https://www.youtube.com/t/terms) when using this software.
 > The developer is not responsible for any misuse of this project.
@@ -392,18 +393,19 @@ Distributed under the **GPLv3**. See the `LICENSE` file for more information.
 
 ## 📬 Contact
 
-**Fahim** — Developer
+**project Adnan** — Open Tube
 
-[![GitHub](https://img.shields.io/badge/GitHub-devfahim00-181717?style=for-the-badge&logo=github&logoColor=white)](https://github.com/devfahim00)
-[![Telegram](https://img.shields.io/badge/Telegram-@droxilen-26A5E4?style=for-the-badge&logo=telegram&logoColor=white)](https://t.me/droxilen)
+Help Line: [https://discord.gg/tY4jGUJ4](https://discord.gg/tY4jGUJ4)
 
-Project Link: [https://github.com/devfahim00/SparkTube](https://github.com/devfahim00/SparkTube)
+Project Link: [https://github.com/adnanXmacro/Project-Xpark](https://github.com/adnanXmacro/Project-Xpark)
+
+Upstream: [https://github.com/devfahim00/SparkTube](https://github.com/devfahim00/SparkTube)
 
 <div align="center">
 
 <br>
 
-**If you like SparkTube, please consider giving it a ⭐ — it really helps!**
+**If you like Open Tube, please consider giving it a ⭐ — it really helps!**
 
 Made with ❤️ in Bangladesh 🇧🇩
 

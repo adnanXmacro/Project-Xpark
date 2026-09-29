@@ -150,7 +150,7 @@
     <string name="error_no_channels">No channels found</string>
 
     <!-- Menu -->
-    <string name="menu_join_telegram">Join Telegram</string>
+    <string name="menu_join_telegram">Help Line</string>
 
     <!-- Settings submenus -->
     <string name="menu_settings">Settings</string>
