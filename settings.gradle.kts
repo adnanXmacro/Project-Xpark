@@ -15,5 +15,5 @@ dependencyResolutionManagement {
     }
 }
 
-rootProject.name = "SparkTube"
+rootProject.name = "OpenTube"
 include(":app")

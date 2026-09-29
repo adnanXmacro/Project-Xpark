@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">SparkTube</string>
+    <string name="app_name">Open Tube by project Adnan</string>
 
     <!-- Onboarding -->
     <string name="onboarding_title">Choose your country / region</string>
@@ -49,12 +49,12 @@
     <string name="clear_favorites_confirm">Remove all favorite videos?</string>
     <string name="favorites_cleared">Favorites cleared</string>
     <string name="about">About</string>
-    <string name="about_text">SparkTube is a lightweight YouTube client for Android, built with Kotlin and NewPipeExtractor. It shows country-based video suggestions and never displays live streams. This project is for educational purposes and is not affiliated with YouTube or Google.</string>
+    <string name="about_text">Open Tube by project Adnan is a lightweight YouTube client for Android, based on SparkTube. Built with Kotlin and NewPipeExtractor. It shows country-based video suggestions and never displays live streams. This project is for educational purposes and is not affiliated with YouTube or Google.</string>
     <string name="github">GitHub</string>
     <string name="version_fmt">Version %1$s</string>
 
     <!-- Player / errors -->
-    <string name="live_not_supported">Live streams are not shown in SparkTube</string>
+    <string name="live_not_supported">Live streams are not shown in Open Tube</string>
     <string name="error_no_results">No videos found</string>
     <string name="error_no_songs">No songs found</string>
     <string name="error_no_streams">This video cannot be played</string>
@@ -91,7 +91,7 @@
     <string name="download_audio_section">Audio only</string>
     <string name="download_video_section">Video only</string>
     <string name="download_av_section">Video + Audio</string>
-    <string name="download_pair_note">Downloads the video and audio tracks as a pair — they play together in SparkTube</string>
+    <string name="download_pair_note">Downloads the video and audio tracks as a pair — they play together in Open Tube</string>
     <string name="download_muxed_note">Best quality (video + audio in one file, plays in any player)</string>
     <string name="download_delete_confirm">Delete this download?</string>
     <string name="download_deleted">Download deleted</string>
