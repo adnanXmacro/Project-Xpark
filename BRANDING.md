@@ -23,6 +23,8 @@ After a messy dump that overwrote strings, restore branding:
 
 Do not install a SparkTube APK over this app. The packages are different, so they can coexist. Users update only from Project-Xpark releases.
 
+Release APKs must be signed. GitHub will not accept an unsigned package (`package appears to be invalid`). `assembleRelease` uses `keystore/keystore.properties` (public sideload key). Optional `ANDROID_KEYSTORE_*` env vars override that. CI fails unless `apksigner verify` succeeds.
+
 ## Overlay scope
 
 README display name and clone/download links are maintained in this fork's README.

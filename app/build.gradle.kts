@@ -1,4 +1,5 @@
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
+import java.util.Properties
 
 plugins {
     id("com.android.application")
@@ -19,23 +20,34 @@ android {
         versionName = "1.0.0"
     }
 
-    // Release signing: credentials come from environment variables so they
-    // never live in the repo. CI exports them from GitHub secrets; local
-    // builds without the vars simply produce an unsigned release APK.
-    val keystoreFile = System.getenv("ANDROID_KEYSTORE_FILE")
-    val keystorePassword = System.getenv("ANDROID_KEYSTORE_PASSWORD")
-    val keyAlias = System.getenv("ANDROID_KEY_ALIAS")
-    val keyPassword = System.getenv("ANDROID_KEY_PASSWORD")
-    val hasReleaseSigning = keystoreFile != null && keystorePassword != null &&
-        keyAlias != null && keyPassword != null
+    val envKeystoreFile = System.getenv("ANDROID_KEYSTORE_FILE")
+    val envKeystorePassword = System.getenv("ANDROID_KEYSTORE_PASSWORD")
+    val envKeyAlias = System.getenv("ANDROID_KEY_ALIAS")
+    val envKeyPassword = System.getenv("ANDROID_KEY_PASSWORD")
+    val hasEnvSigning = !envKeystoreFile.isNullOrBlank() &&
+        !envKeystorePassword.isNullOrBlank() &&
+        !envKeyAlias.isNullOrBlank() &&
+        !envKeyPassword.isNullOrBlank()
+    val keystorePropsFile = rootProject.file("keystore/keystore.properties")
+    val hasFileSigning = keystorePropsFile.isFile
+    require(hasEnvSigning || hasFileSigning) {
+        "Release builds must be signed. Provide ANDROID_KEYSTORE_* env vars or keystore/keystore.properties."
+    }
 
     signingConfigs {
-        if (hasReleaseSigning) {
-            create("release") {
-                storeFile = file(keystoreFile!!)
-                storePassword = keystorePassword
-                this.keyAlias = keyAlias
-                this.keyPassword = keyPassword
+        create("release") {
+            if (hasEnvSigning) {
+                storeFile = file(envKeystoreFile!!)
+                storePassword = envKeystorePassword
+                this.keyAlias = envKeyAlias
+                this.keyPassword = envKeyPassword
+            } else {
+                val props = Properties()
+                keystorePropsFile.inputStream().use { props.load(it) }
+                storeFile = rootProject.file("keystore/${props.getProperty("storeFile")}")
+                storePassword = props.getProperty("storePassword")
+                this.keyAlias = props.getProperty("keyAlias")
+                this.keyPassword = props.getProperty("keyPassword")
             }
         }
     }
@@ -47,9 +59,7 @@ android {
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
-            if (hasReleaseSigning) {
-                signingConfig = signingConfigs.getByName("release")
-            }
+            signingConfig = signingConfigs.getByName("release")
         }
     }
 
