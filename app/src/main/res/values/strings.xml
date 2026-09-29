@@ -1,6 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">Open Tube by project Adnan</string>
+    <string name="app_name">Open Tube</string>
+    <string name="home_brand">Open Tube</string>
+    <string name="home_tagline">by projectAdnan</string>
 
     <!-- Onboarding -->
     <string name="onboarding_title">Choose your country / region</string>
@@ -50,7 +52,6 @@
     <string name="favorites_cleared">Favorites cleared</string>
     <string name="about">About</string>
     <string name="about_text">Open Tube by project Adnan is a lightweight YouTube client for Android, based on SparkTube. Built with Kotlin and NewPipeExtractor. It shows country-based video suggestions and never displays live streams. This project is for educational purposes and is not affiliated with YouTube or Google.</string>
-    <string name="github">GitHub</string>
     <string name="version_fmt">Version %1$s</string>
 
     <!-- Player / errors -->

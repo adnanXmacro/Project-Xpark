@@ -12,11 +12,11 @@ android {
     compileSdk = 35
 
     defaultConfig {
-        applicationId = "com.sparktube.app"
+        applicationId = "com.opentubebyproadnan.app"
         minSdk = 24
         targetSdk = 34
-        versionCode = 10
-        versionName = "1.4.1"
+        versionCode = 11
+        versionName = "1.0.0"
     }
 
     // Release signing: credentials come from environment variables so they

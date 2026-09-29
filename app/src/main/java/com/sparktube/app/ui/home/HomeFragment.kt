@@ -3,9 +3,13 @@ package com.sparktube.app.ui.home
 import android.content.Intent
 import android.os.Bundle
 import android.os.SystemClock
+import android.text.SpannableString
+import android.text.Spanned
+import android.text.style.ForegroundColorSpan
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import androidx.core.content.ContextCompat
 import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
@@ -62,6 +66,8 @@ class HomeFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
+        applyHomeBrand()
+
         adapter = VideoAdapter(onClick = { model ->
             PlayerActivity.start(requireContext(), model)
         })
@@ -109,9 +115,26 @@ class HomeFragment : Fragment() {
 
     override fun onResume() {
         super.onResume()
+        applyHomeBrand()
         // Flag follows the selected country at all times.
         binding.countryFlag.text = Countries.flagOf(AppPrefs.countryOrDefault)
         maybeReload()
+    }
+
+    /** Red O and T on "Open Tube"; remaining letters keep the view's on_surface color. */
+    private fun applyHomeBrand() {
+        val title = getString(R.string.home_brand)
+        val spannable = SpannableString(title)
+        val red = ContextCompat.getColor(requireContext(), R.color.spark_red)
+        val o = title.indexOf('O')
+        if (o >= 0) {
+            spannable.setSpan(ForegroundColorSpan(red), o, o + 1, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
+        }
+        val t = title.indexOf('T')
+        if (t >= 0) {
+            spannable.setSpan(ForegroundColorSpan(red), t, t + 1, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
+        }
+        binding.appTitle.text = spannable
     }
 
     override fun onHiddenChanged(hidden: Boolean) {

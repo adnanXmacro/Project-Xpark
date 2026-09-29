@@ -11,7 +11,7 @@ import java.net.URL
 
 /**
  * GitHub release checker: compares the running version against
- * devfahim00/SparkTube's latest release and surfaces title + changelog.
+ * adnanXmacro/Project-Xpark's latest release and surfaces title + changelog.
  */
 object UpdateChecker {
 
@@ -24,7 +24,7 @@ object UpdateChecker {
     )
 
     private const val LATEST_URL =
-        "https://api.github.com/repos/devfahim00/SparkTube/releases/latest"
+        "https://api.github.com/repos/adnanXmacro/Project-Xpark/releases/latest"
 
     /** Once per process: the silent on-open check must not nag repeatedly. */
     @Volatile
@@ -58,7 +58,7 @@ object UpdateChecker {
                 apkUrl = apk,
                 htmlUrl = json.optString(
                     "html_url",
-                    "https://github.com/devfahim00/SparkTube/releases"
+                    "https://github.com/adnanXmacro/Project-Xpark/releases"
                 )
             )
         } catch (e: Exception) {

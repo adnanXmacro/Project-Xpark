@@ -76,6 +76,10 @@ and then tailors trending video suggestions to that region.
 Open Tube also **intentionally never shows live streams** — not in the home feed, not in search
 results, and not in the player — keeping the experience focused purely on on-demand videos.
 
+The Android package is `com.opentubebyproadnan.app`. In-app updates come only from
+[Project-Xpark releases](https://github.com/adnanXmacro/Project-Xpark/releases) after we ship.
+SparkTube APKs are a different app and will not overwrite Open Tube.
+
 ---
 
 ## ✨ Features
@@ -330,6 +334,16 @@ Only on your device. Nothing is uploaded or synced anywhere.
 <br>
 
 No. Open Tube is an independent project based on SparkTube. See the [Disclaimer](#-disclaimer).
+
+</details>
+
+<details>
+<summary><b>Where do app updates come from?</b></summary>
+
+<br>
+
+Only from this repo's GitHub Releases. SparkTube updates are never offered to Open Tube users.
+We port core changes ourselves, then ship our own version.
 
 </details>
 

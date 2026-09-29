@@ -282,15 +282,7 @@ class MenuFragment : Fragment() {
         AlertDialog.Builder(requireContext())
             .setTitle(R.string.app_name)
             .setMessage(getString(R.string.about_text))
-            .setPositiveButton(R.string.github) { _, _ ->
-                startActivity(
-                    android.content.Intent(
-                        android.content.Intent.ACTION_VIEW,
-                        Uri.parse("https://github.com/devfahim00/SparkTube")
-                    )
-                )
-            }
-            .setNegativeButton(android.R.string.cancel, null)
+            .setPositiveButton(android.R.string.ok, null)
             .show()
     }
 

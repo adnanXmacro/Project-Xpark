@@ -2,36 +2,39 @@
 
 This repo is a branded fork of [SparkTube](https://github.com/devfahim00/SparkTube).
 
-Display name: **Open Tube by project Adnan**
+Display name: **Open Tube**
+Tagline: **by projectAdnan**
+Package / `applicationId`: `com.opentubebyproadnan.app`
 
-Package / `applicationId` stay `com.sparktube.app` so SparkTube merges stay clean.
-In-app "Check for update" still reads `devfahim00/SparkTube` GitHub releases.
+Kotlin source package stays `com.sparktube.app` so SparkTube core files can be copied with little path rewriting.
 
-## Pull SparkTube updates
+In-app "Check for update" reads `adnanXmacro/Project-Xpark` GitHub releases only. SparkTube releases never notify Open Tube users.
+
+## Pull SparkTube core updates
+
+Do not `git merge upstream`. Port only core files when the maintainer names a SparkTube change, then bump our independent `versionName` / `versionCode` and publish a Project-Xpark release.
+
+After a messy dump that overwrote strings, restore branding:
 
 ```bash
-# Fetch SparkTube
-git fetch upstream
-
-# Merge their main branch
-git merge upstream/main
-
-# Restore Open Tube name if the merge overwrote strings
+# Re-apply Open Tube name, Help Line, and updater URL
 ./tools/rebrand.sh
 ```
 
-Do not install a SparkTube APK over this app. That APK would restore the SparkTube name.
-Build Open Tube yourself after each merge.
+Do not install a SparkTube APK over this app. The packages are different, so they can coexist. Users update only from Project-Xpark releases.
 
 ## Overlay scope
 
 README display name and clone/download links are maintained in this fork's README.
 
-`tools/rebrand.sh` only patches:
+`tools/rebrand.sh` patches:
 
-- launcher / about name
+- launcher / about name (`Open Tube`)
+- home header brand + tagline strings
 - a few user-facing "SparkTube" strings
 - Help Line label + Discord invite
 - Gradle `rootProject.name`
+- `applicationId` `com.opentubebyproadnan.app`
+- `UpdateChecker` URLs to `adnanXmacro/Project-Xpark`
 
-It does not rename Kotlin packages, theme style names, crash-log folder, or the updater URL.
+It does not rename Kotlin packages, theme style names, or the crash-log folder.
