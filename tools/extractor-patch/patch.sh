@@ -38,22 +38,41 @@ dl() { curl -sL -f --max-time 90 -o "deps/$2" "$1" && echo "OK  $2" || { echo "F
 [ -f "deps/NewPipeExtractor-$EXTRACTOR_VERSION.jar" ] || \
     dl "https://jitpack.io/com/github/TeamNewPipe/NewPipeExtractor/$EXTRACTOR_VERSION/NewPipeExtractor-$EXTRACTOR_VERSION.jar" "NewPipeExtractor-$EXTRACTOR_VERSION.jar"
 
-java -jar deps/ecj.jar -8 -nowarn -cp deps/asm-9.7.jar -d out AuditPatch.java AndroidUrlCompat.java
+EXTRACTOR_CP="deps/NewPipeExtractor-$EXTRACTOR_VERSION.jar"
+
+java -jar deps/ecj.jar -8 -nowarn -cp "deps/asm-9.7.jar:$EXTRACTOR_CP" -d out \
+    AuditPatch.java AndroidUrlCompat.java SortPatch.java ContinuationPatch.java \
+    YoutubeChannelTabSortParams.java
 
 # Audit (all java.* method refs) + patch (URLDecoder/URLEncoder Charset overloads)
 java -cp out:deps/asm-9.7.jar AuditPatch --audit "deps/NewPipeExtractor-$EXTRACTOR_VERSION.jar" > out/audit.txt || true
 java -cp out:deps/asm-9.7.jar AuditPatch --patch \
     "deps/NewPipeExtractor-$EXTRACTOR_VERSION.jar" \
-    "out/$OUT_JAR" \
+    "out/urlcompat.jar" \
     out/org/schabi/newpipe/extractor/utils/AndroidUrlCompat.class
 
-# Verify: no Charset overloads left; helper inside the jar
+# Videos Latest browse params + Accept-Language for sorted continuations
+java -cp out:deps/asm-9.7.jar SortPatch \
+    out/urlcompat.jar \
+    "out/sort.jar" \
+    out/org/schabi/newpipe/extractor/services/youtube/extractors/YoutubeChannelTabSortParams.class
+
+# Popular / Oldest first pages use YouTube reloadContinuationItemsCommand
+java -cp out:deps/asm-9.7.jar ContinuationPatch \
+    "out/sort.jar" \
+    "out/$OUT_JAR"
+
+# Verify: no Charset overloads left; helpers inside the jar
 java -cp out:deps/asm-9.7.jar AuditPatch --audit "out/$OUT_JAR" > out/audit-patched.txt || true
 if grep -q "Ljava/nio/charset/Charset;)Ljava/lang/String;" out/audit-patched.txt; then
     echo "ERROR: Charset-overload invokes still present — patch did not apply!"
     exit 1
 fi
-unzip -l "out/$OUT_JAR" | grep AndroidUrlCompat
+unzip -l "out/$OUT_JAR" | grep -E 'AndroidUrlCompat|YoutubeChannelTabSortParams'
+if ! unzip -l "out/$OUT_JAR" | grep -q YoutubeChannelTabSortParams; then
+    echo "ERROR: YoutubeChannelTabSortParams missing from patched jar"
+    exit 1
+fi
 
 echo ""
 echo "Patched jar ready: out/$OUT_JAR"

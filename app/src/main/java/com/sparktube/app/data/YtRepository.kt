@@ -21,12 +21,19 @@ import org.schabi.newpipe.extractor.comments.CommentsInfoItem
 import org.schabi.newpipe.extractor.kiosk.KioskInfo
 import org.schabi.newpipe.extractor.linkhandler.ListLinkHandler
 import org.schabi.newpipe.extractor.localization.ContentCountry
+import org.schabi.newpipe.extractor.playlist.PlaylistInfo
+import org.schabi.newpipe.extractor.playlist.PlaylistInfoItem
 import org.schabi.newpipe.extractor.search.SearchInfo
+import org.schabi.newpipe.extractor.services.youtube.YoutubeChannelHelper
+import org.schabi.newpipe.extractor.services.youtube.YoutubeParsingHelper
+import org.schabi.newpipe.extractor.services.youtube.extractors.YoutubeChannelTabSortParams
 import org.schabi.newpipe.extractor.services.youtube.linkHandler.YoutubeSearchQueryHandlerFactory
 import org.schabi.newpipe.extractor.stream.Description
 import org.schabi.newpipe.extractor.stream.StreamInfo
 import org.schabi.newpipe.extractor.stream.StreamInfoItem
+import com.grack.nanojson.JsonWriter
 import java.io.IOException
+import java.nio.charset.StandardCharsets
 
 data class PageResult(
     val items: List<StreamInfoItem>,
@@ -44,6 +51,34 @@ data class ChannelUi(
     val avatarUrl: String,
     val subscriberCount: Long,
     val description: String
+)
+
+enum class ChannelVideoSort {
+    LATEST,
+    POPULAR,
+    OLDEST;
+
+    val extractorId: String
+        get() = when (this) {
+            LATEST -> ""
+            POPULAR -> YoutubeChannelTabSortParams.POPULAR
+            OLDEST -> YoutubeChannelTabSortParams.OLDEST
+        }
+}
+
+data class YoutubePlaylistItem(
+    val url: String,
+    val name: String,
+    val thumbnailUrl: String,
+    val streamCount: Long
+)
+
+data class YoutubePlaylistResult(
+    val url: String,
+    val name: String,
+    val streamCount: Long,
+    val items: List<StreamInfoItem>,
+    val nextPage: Page?
 )
 
 /** One YouTube comment, already flattened for the comments sheet. */
@@ -333,30 +368,136 @@ object YtRepository {
             )
         }
 
-    /** First page of a channel's videos tab (live filtered out). */
-    suspend fun channelVideos(channelUrl: String): Pair<List<StreamInfoItem>, Page?> =
+    /** First page of a channel's videos tab for [sort] (live filtered out). */
+    suspend fun channelVideos(
+        channelUrl: String,
+        sort: ChannelVideoSort = ChannelVideoSort.LATEST
+    ): Pair<List<StreamInfoItem>, Page?> =
         withContext(Dispatchers.IO) {
-            val info = ChannelInfo.getInfo(service, channelUrl)
-            val tab = info.tabs.firstOrNull { handler ->
-                handler.contentFilters.firstOrNull() == ChannelTabs.VIDEOS
-            } ?: return@withContext emptyList<StreamInfoItem>() to null
+            if (sort == ChannelVideoSort.POPULAR || sort == ChannelVideoSort.OLDEST) {
+                return@withContext channelSortedVideos(channelUrl, sort)
+            }
+            val tab = channelTabHandler(channelUrl, ChannelTabs.VIDEOS, sort.extractorId)
+                ?: return@withContext emptyList<StreamInfoItem>() to null
             val page = ChannelTabInfo.getInfo(service, tab)
             LiveFilter.sanitize(page.relatedItems) to page.nextPage
         }
 
-    /** Next page of a channel's videos tab. */
+    /** Next page of a channel's videos tab; [sort] must match the cursor. */
     suspend fun channelVideosMore(
         channelUrl: String,
+        sort: ChannelVideoSort,
         page: Page
     ): Pair<List<StreamInfoItem>, Page?> =
         withContext(Dispatchers.IO) {
-            val info = ChannelInfo.getInfo(service, channelUrl)
-            val tab = info.tabs.firstOrNull { handler ->
-                handler.contentFilters.firstOrNull() == ChannelTabs.VIDEOS
-            } ?: return@withContext emptyList<StreamInfoItem>() to null
+            val tab = channelTabHandler(channelUrl, ChannelTabs.VIDEOS, sort.extractorId)
+                ?: return@withContext emptyList<StreamInfoItem>() to null
             val result = ChannelTabInfo.getMoreItems(service, tab, page)
             LiveFilter.sanitize(result.items) to result.nextPage
         }
+
+    /** First page of a channel's playlists tab. */
+    suspend fun channelPlaylists(channelUrl: String): Pair<List<YoutubePlaylistItem>, Page?> =
+        withContext(Dispatchers.IO) {
+            val tab = channelTabHandler(channelUrl, ChannelTabs.PLAYLISTS, "")
+                ?: return@withContext emptyList<YoutubePlaylistItem>() to null
+            val page = ChannelTabInfo.getInfo(service, tab)
+            page.relatedItems.toPlaylistItems() to page.nextPage
+        }
+
+    /** Next page of a channel's playlists tab. */
+    suspend fun channelPlaylistsMore(
+        channelUrl: String,
+        page: Page
+    ): Pair<List<YoutubePlaylistItem>, Page?> =
+        withContext(Dispatchers.IO) {
+            val tab = channelTabHandler(channelUrl, ChannelTabs.PLAYLISTS, "")
+                ?: return@withContext emptyList<YoutubePlaylistItem>() to null
+            val result = ChannelTabInfo.getMoreItems(service, tab, page)
+            result.items.toPlaylistItems() to result.nextPage
+        }
+
+    /** First page of a YouTube playlist (channel playlists, not Library). */
+    suspend fun youtubePlaylist(url: String): YoutubePlaylistResult =
+        withContext(Dispatchers.IO) {
+            val info = PlaylistInfo.getInfo(service, url)
+            YoutubePlaylistResult(
+                url = info.url ?: url,
+                name = info.name.orEmpty(),
+                streamCount = info.streamCount,
+                items = LiveFilter.sanitize(info.relatedItems),
+                nextPage = info.nextPage
+            )
+        }
+
+    /** Next page of a YouTube playlist. */
+    suspend fun youtubePlaylistMore(url: String, page: Page): Pair<List<StreamInfoItem>, Page?> =
+        withContext(Dispatchers.IO) {
+            val result = PlaylistInfo.getMoreItems(service, url, page)
+            LiveFilter.sanitize(result.items) to result.nextPage
+        }
+
+    private fun channelSortedVideos(
+        channelUrl: String,
+        sort: ChannelVideoSort
+    ): Pair<List<StreamInfoItem>, Page?> {
+        val info = ChannelInfo.getInfo(service, channelUrl)
+        val tab = info.tabs.firstOrNull { handler ->
+            handler.contentFilters.firstOrNull() == ChannelTabs.VIDEOS
+        } ?: return emptyList<StreamInfoItem>() to null
+        val channelId = YoutubeChannelHelper.resolveChannelId(info.id)
+        val token = YoutubeChannelTabSortParams.videosContinuation(
+            channelId,
+            sort.extractorId
+        )
+        val json = YoutubeParsingHelper.prepareDesktopJsonBuilder(
+            NewPipe.getPreferredLocalization(),
+            NewPipe.getPreferredContentCountry()
+        ).value("continuation", token).done()
+        val body = JsonWriter.string(json).toByteArray(StandardCharsets.UTF_8)
+        val seed = Page(
+            YoutubeChannelTabSortParams.BROWSE_URL,
+            null,
+            listOf(info.name.orEmpty(), info.url ?: channelUrl, "UNKNOWN"),
+            null,
+            body
+        )
+        val result = ChannelTabInfo.getMoreItems(service, tab, seed)
+        return LiveFilter.sanitize(result.items) to result.nextPage
+    }
+
+    private fun channelTabHandler(
+        channelUrl: String,
+        tabId: String,
+        sortFilter: String
+    ): ListLinkHandler? {
+        val info = ChannelInfo.getInfo(service, channelUrl)
+        val tab = info.tabs.firstOrNull { handler ->
+            handler.contentFilters.firstOrNull() == tabId
+        } ?: return null
+        if (sortFilter.isEmpty()) return tab
+        return ListLinkHandler(
+            tab.originalUrl,
+            tab.url,
+            tab.id,
+            tab.contentFilters,
+            sortFilter
+        )
+    }
+
+    private fun List<InfoItem>.toPlaylistItems(): List<YoutubePlaylistItem> {
+        val seen = HashSet<String>()
+        return filterIsInstance<PlaylistInfoItem>()
+            .filter { !it.url.isNullOrBlank() && seen.add(it.url!!) }
+            .map { item ->
+                YoutubePlaylistItem(
+                    url = item.url.orEmpty(),
+                    name = item.name.orEmpty(),
+                    thumbnailUrl = item.thumbnails.maxByOrNull { it.height }?.url.orEmpty(),
+                    streamCount = item.streamCount
+                )
+            }
+    }
 
     /** First page of top comments for a video. */
     suspend fun comments(url: String): CommentsPage =

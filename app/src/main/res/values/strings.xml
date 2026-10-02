@@ -119,6 +119,11 @@
 
     <!-- Channel -->
     <string name="channel_videos">Videos</string>
+    <string name="channel_playlists">Playlists</string>
+    <string name="channel_sort_latest">Latest</string>
+    <string name="channel_sort_popular">Popular</string>
+    <string name="channel_sort_oldest">Oldest</string>
+    <string name="empty_channel_playlists">No playlists on this channel</string>
 
     <string name="action_fullscreen">Fullscreen</string>
     <string name="action_scale_mode">Video scale mode</string>

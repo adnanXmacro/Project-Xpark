@@ -65,6 +65,11 @@
             android:name=".ui.playlist.PlaylistActivity"
             android:exported="false" />
 
+        <activity
+            android:name=".ui.playlist.YoutubePlaylistActivity"
+            android:exported="false"
+            android:configChanges="orientation|screenSize|keyboardHidden|screenLayout|smallestScreenSize|uiMode" />
+
         <service
             android:name=".playback.PlaybackService"
             android:exported="true"
