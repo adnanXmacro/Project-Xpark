@@ -13,4 +13,7 @@
     <files-path
         name="crash_logs_internal"
         path="SparkTube/" />
+    <cache-path
+        name="app_updates"
+        path="updates/" />
 </paths>

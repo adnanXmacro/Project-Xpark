@@ -272,7 +272,7 @@ class MenuFragment : Fragment() {
             .setTitle(getString(R.string.update_available_title) + " · ${release.tag.removePrefix("v")}")
             .setMessage(body)
             .setPositiveButton(R.string.update_download) { _, _ ->
-                UpdateChecker.openDownload(ctx, release)
+                UpdateChecker.startDownload(ctx, release)
             }
             .setNegativeButton(R.string.later, null)
             .show()

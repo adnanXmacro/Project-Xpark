@@ -24,6 +24,7 @@ import com.sparktube.app.ui.menu.MenuFragment
 import com.sparktube.app.ui.music.MusicFragment
 import com.sparktube.app.ui.music.NowPlayingActivity
 import com.sparktube.app.ui.player.PlayerActivity
+import com.sparktube.app.update.UpdateInstaller
 import com.sparktube.app.util.AppPrefs
 import com.sparktube.app.util.Themes
 import com.sparktube.app.util.UpdateChecker
@@ -71,6 +72,7 @@ class MainActivity : AppCompatActivity() {
 
         requestNotificationPermissionIfNeeded()
         silentlyCheckForUpdate()
+        handleInstallIntent(intent)
 
         binding.navHome.setOnClickListener { select(R.id.navHome) }
         binding.navMusic.setOnClickListener { select(R.id.navMusic) }
@@ -106,12 +108,25 @@ class MainActivity : AppCompatActivity() {
         outState.putInt(STATE_SELECTED, selectedId)
     }
 
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        setIntent(intent)
+        handleInstallIntent(intent)
+    }
+
     override fun onResume() {
         super.onResume()
         // A theme / accent change while we were paused: re-style ourselves.
         if (Themes.recreateIfNeeded(this)) return
         PlaybackCenter.addListener(playbackListener)
         bindMiniPlayer()
+    }
+
+    private fun handleInstallIntent(intent: Intent?) {
+        if (intent?.getBooleanExtra(EXTRA_INSTALL_UPDATE, false) == true) {
+            intent.removeExtra(EXTRA_INSTALL_UPDATE)
+            UpdateInstaller.launchInstall(fromUserTap = true)
+        }
     }
 
     override fun onPause() {
@@ -145,7 +160,7 @@ class MainActivity : AppCompatActivity() {
                     )
                     .setMessage(body)
                     .setPositiveButton(R.string.update_download) { _, _ ->
-                        UpdateChecker.openDownload(this@MainActivity, release)
+                        UpdateChecker.startDownload(this@MainActivity, release)
                     }
                     .setNegativeButton(R.string.later, null)
                     .show()
@@ -278,6 +293,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     companion object {
+        const val EXTRA_INSTALL_UPDATE = "install_update"
         private const val STATE_SELECTED = "selected_nav"
         private const val REQ_NOTIFICATIONS = 4711
         private val NAV_IDS = intArrayOf(R.id.navHome, R.id.navMusic, R.id.navLibrary, R.id.navMenu)

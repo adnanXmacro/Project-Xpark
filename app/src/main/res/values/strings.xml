@@ -230,6 +230,14 @@
     <string name="update_download">Download update</string>
     <string name="later">Later</string>
     <string name="update_check_failed">Could not check for updates</string>
+    <string name="update_notification_channel">App updates</string>
+    <string name="update_downloading">Downloading %1$s…</string>
+    <string name="update_download_progress">Downloading %1$s — %2$d%%</string>
+    <string name="update_download_cancel">Cancel</string>
+    <string name="update_download_already">Update already downloading</string>
+    <string name="update_download_failed">Update download failed</string>
+    <string name="update_ready_to_install">%1$s is ready to install</string>
+    <string name="update_tap_to_install">Tap to install</string>
 
     <!-- Music favourites / downloads -->
     <string name="music_favorites">Favorites</string>

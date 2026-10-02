@@ -5,6 +5,7 @@ import coil.ImageLoader
 import coil.ImageLoaderFactory
 import com.sparktube.app.net.OkHttpDownloader
 import com.sparktube.app.playback.PlaybackCenter
+import com.sparktube.app.update.UpdateInstaller
 import com.sparktube.app.util.AppPrefs
 import com.sparktube.app.util.CrashReporter
 import com.sparktube.app.util.Themes
@@ -26,6 +27,7 @@ class SparkTubeApp : Application(), ImageLoaderFactory {
         // now written to a "SparkTube" folder on the user's device instead;
         // see util/CrashReporter.kt and Settings → Crash logs.
         CrashReporter.install(this)
+        UpdateInstaller.init(this)
 
         AppPrefs.init(this)
         PlaybackCenter.init(this)

@@ -1,8 +1,7 @@
 package com.sparktube.app.util
 
 import android.content.Context
-import android.content.Intent
-import android.net.Uri
+import com.sparktube.app.update.UpdateDownloadService
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.json.JSONObject
@@ -81,11 +80,8 @@ object UpdateChecker {
         return false
     }
 
-    /** Opens the release APK (or the release page) in the browser. */
-    fun openDownload(context: Context, release: Release) {
-        val url = release.apkUrl ?: release.htmlUrl
-        runCatching {
-            context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(url)))
-        }
+    /** Downloads the APK in-app, or opens the release page if no asset exists. */
+    fun startDownload(context: Context, release: Release) {
+        UpdateDownloadService.start(context, release)
     }
 }
