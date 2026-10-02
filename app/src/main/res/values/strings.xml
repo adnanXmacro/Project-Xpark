@@ -235,6 +235,8 @@
     <string name="update_download_progress">Downloading %1$s — %2$d%%</string>
     <string name="update_download_cancel">Cancel</string>
     <string name="update_download_already">Update already downloading</string>
+    <string name="update_download_started_title">Downloading update</string>
+    <string name="update_download_started">We are downloading the latest update for you and will ask you to install once it is done. You can use the current app in the meantime.</string>
     <string name="update_download_failed">Update download failed</string>
     <string name="update_ready_to_install">%1$s is ready to install</string>
     <string name="update_tap_to_install">Tap to install</string>
