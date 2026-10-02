@@ -74,10 +74,7 @@ class MainActivity : AppCompatActivity() {
         silentlyCheckForUpdate()
         handleInstallIntent(intent)
 
-        binding.navHome.setOnClickListener { select(R.id.navHome) }
-        binding.navMusic.setOnClickListener { select(R.id.navMusic) }
-        binding.navLibrary.setOnClickListener { select(R.id.navLibrary) }
-        binding.navMenu.setOnClickListener { select(R.id.navMenu) }
+        binding.floatingNav.onTabSelected = { id -> select(id, fromNav = true) }
 
         // Rounded corners for the live video / artwork box of the mini player.
         binding.miniMedia.clipToOutline = true
@@ -101,6 +98,7 @@ class MainActivity : AppCompatActivity() {
         }
 
         applySelection()
+        binding.floatingNav.setSelectedTab(selectedId, animate = false)
     }
 
     override fun onSaveInstanceState(outState: Bundle) {
@@ -239,10 +237,13 @@ class MainActivity : AppCompatActivity() {
         )
     }
 
-    private fun select(id: Int) {
+    private fun select(id: Int, fromNav: Boolean = false) {
         if (id == selectedId) return
         selectedId = id
         applySelection()
+        if (!fromNav) {
+            binding.floatingNav.setSelectedTab(id, AppPrefs.animations)
+        }
     }
 
     private fun applySelection() {

@@ -16,8 +16,8 @@ android {
         applicationId = "com.opentubebyproadnan.app"
         minSdk = 24
         targetSdk = 34
-        versionCode = 14
-        versionName = "1.2.1"
+        versionCode = 15
+        versionName = "1.2.2"
     }
 
     val envKeystoreFile = System.getenv("ANDROID_KEYSTORE_FILE")

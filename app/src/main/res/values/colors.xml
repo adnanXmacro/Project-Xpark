@@ -4,7 +4,11 @@
     <color name="bg">#F5F5F7</color>
     <color name="surface">#FFFFFF</color>
     <color name="surface_elevated">#EFEFF2</color>
-    <color name="navbar_bg">#F5F5F7</color>
+    <color name="navbar_bg">#F2F5F5F7</color>
+    <color name="nav_pill">#F2F5F5F7</color>
+    <color name="nav_bubble">#E8E4E4EA</color>
+    <color name="nav_pill_sheen">#26FFFFFF</color>
+    <color name="nav_bubble_sheen">#33FFFFFF</color>
     <!-- Floating navbar outline: visible black in light theme. -->
     <color name="nav_border">#59000000</color>
 
