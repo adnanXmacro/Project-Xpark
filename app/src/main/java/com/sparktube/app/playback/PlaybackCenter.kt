@@ -415,6 +415,13 @@ object PlaybackCenter {
 
         override fun onMediaItemTransition(mediaItem: MediaItem?, reason: Int) {
             if (mode != Mode.AUDIO) return
+            // A repeat (looping) of the same song must not reset the count /
+            // timer; every real change of song re-applies the loop setting.
+            if (reason == Player.MEDIA_ITEM_TRANSITION_REASON_REPEAT) {
+                onLoopRepeat()
+            } else {
+                applyMusicLoop()
+            }
             val index = playerRef?.currentMediaItemIndex ?: return
             if (index < 0 || index >= queue.size) return
             queueIndex = index
@@ -488,7 +495,13 @@ object PlaybackCenter {
         playerRef?.run {
             stop()
             clearMediaItems()
+            // Video playback never loops; music re-applies its own setting.
+            repeatMode = Player.REPEAT_MODE_OFF
         }
+        loopTimerJob?.cancel()
+        loopTimerJob = null
+        loopRemaining = 0
+        loopTimerDeadline = 0L
     }
 
     // ----- Commands -----
@@ -635,7 +648,124 @@ object PlaybackCenter {
 
     /** Music settings: pause between songs instead of auto-advancing. */
     fun applyMusicAutoplay() {
-        playerRef?.setPauseAtEndOfMediaItems(!AppPrefs.musicAutoplayNext)
+        // A loop keeps the song on the same media item, so "pause at end"
+        // must not stop it dead before it can repeat.
+        playerRef?.setPauseAtEndOfMediaItems(!AppPrefs.musicAutoplayNext && !loopActiveNow())
+    }
+
+    // ----- Music loop -----
+
+    /** Extra repeats left for LOOP_COUNT on the current song (0 = none). */
+    private var loopRemaining = 0
+    private var loopTimerJob: Job? = null
+
+    /**
+     * Elapsed-realtime deadline for LOOP_TIMER, or 0 when no timer window is
+     * open yet. Kept as a deadline (not "restart per song") so the timer runs
+     * once for the whole loop session: when it expires looping ends and the
+     * queue simply carries on.
+     */
+    private var loopTimerDeadline = 0L
+
+    /** True while the current song should repeat forever / N times / until the timer. */
+    private fun loopActiveNow(): Boolean = when (AppPrefs.musicLoopMode) {
+        AppPrefs.LOOP_INFINITE, AppPrefs.LOOP_COUNT -> true
+        AppPrefs.LOOP_TIMER -> SystemClock.elapsedRealtime() < loopTimerDeadline
+        else -> false
+    }
+
+    /**
+     * Starts a fresh loop window (new queue, downloaded track, or the user
+     * picked a setting) and applies it.
+     */
+    fun setMusicLoop() {
+        loopTimerDeadline = 0L
+        applyMusicLoop()
+    }
+
+    /**
+     * Applies the persisted music loop setting to the player. Uses ExoPlayer's
+     * native repeat mode for the actual looping and layers the count / timer
+     * bookkeeping on top, so nothing about normal queue playback changes when
+     * the loop is off. Safe to call before the player exists (no-op).
+     */
+    fun applyMusicLoop() {
+        val p = playerRef ?: return
+        // Looping is a music-only feature: never repeat a playing video.
+        if (mode != Mode.AUDIO) {
+            cancelLoopTimer()
+            p.repeatMode = Player.REPEAT_MODE_OFF
+            return
+        }
+        when (AppPrefs.musicLoopMode) {
+            AppPrefs.LOOP_INFINITE -> {
+                cancelLoopTimer()
+                loopRemaining = 0
+                p.repeatMode = Player.REPEAT_MODE_ONE
+            }
+            AppPrefs.LOOP_COUNT -> {
+                cancelLoopTimer()
+                loopRemaining = AppPrefs.musicLoopCount
+                p.repeatMode = Player.REPEAT_MODE_ONE
+            }
+            AppPrefs.LOOP_TIMER -> {
+                val now = SystemClock.elapsedRealtime()
+                // Open the window once; transitions of the same session keep it.
+                if (loopTimerDeadline == 0L) {
+                    loopTimerDeadline = now + AppPrefs.musicLoopMinutes * 60_000L
+                    startLoopTimer(loopTimerDeadline - now)
+                }
+                p.repeatMode = if (now < loopTimerDeadline) {
+                    Player.REPEAT_MODE_ONE
+                } else {
+                    Player.REPEAT_MODE_OFF
+                }
+            }
+            else -> {
+                cancelLoopTimer()
+                loopTimerDeadline = 0L
+                loopRemaining = 0
+                p.repeatMode = Player.REPEAT_MODE_OFF
+            }
+        }
+        applyMusicAutoplay()
+    }
+
+    private fun cancelLoopTimer() {
+        loopTimerJob?.cancel()
+        loopTimerJob = null
+    }
+
+    /**
+     * Stops looping once the timer runs out and lets the queue carry on
+     * normally.
+     */
+    private fun startLoopTimer(remainingMs: Long) {
+        cancelLoopTimer()
+        if (remainingMs <= 0) return
+        loopTimerJob = scope.launch {
+            delay(remainingMs)
+            // The user may have changed the setting while we waited.
+            if (AppPrefs.musicLoopMode == AppPrefs.LOOP_TIMER &&
+                SystemClock.elapsedRealtime() >= loopTimerDeadline
+            ) {
+                playerRef?.repeatMode = Player.REPEAT_MODE_OFF
+                applyMusicAutoplay()
+            }
+        }
+    }
+
+    /**
+     * One repeat of the current song just started. Only LOOP_COUNT needs to
+     * count down; when the last allowed repeat has begun, looping is turned
+     * off so the song advances normally once it ends.
+     */
+    private fun onLoopRepeat() {
+        if (AppPrefs.musicLoopMode != AppPrefs.LOOP_COUNT) return
+        if (loopRemaining > 0) loopRemaining--
+        if (loopRemaining <= 0) {
+            playerRef?.repeatMode = Player.REPEAT_MODE_OFF
+        }
     }
 
     fun next() {
@@ -672,10 +802,15 @@ object PlaybackCenter {
     fun stopPlayback() {
         resolveJob?.cancel()
         prefetchJob?.cancel()
+        loopTimerJob?.cancel()
+        loopTimerJob = null
+        loopRemaining = 0
+        loopTimerDeadline = 0L
         pendingMusic.clear()
         playerRef?.run {
             stop()
             clearMediaItems()
+            repeatMode = Player.REPEAT_MODE_OFF
         }
         mode = Mode.NONE
         playlistMode = false
@@ -784,6 +919,7 @@ object PlaybackCenter {
         catalog = null
         notify { it.onCatalogReady() }
         ensureService()
+        if (mode == Mode.AUDIO) setMusicLoop()
     }
 
     /** Prepares and starts the finished download's files on the player. False when none exist. */
@@ -1383,8 +1519,8 @@ object PlaybackCenter {
             prepare()
             playWhenReady = true
             setPlaybackSpeed(playbackSpeed)
-            applyMusicAutoplay()
         }
+        setMusicLoop()
         // "Related" alone rarely fills a radio: top it up with the artist's songs.
         if (radioMode && items.size < RADIO_MIN_UPCOMING) {
             topUpRadioFromSearch(first)

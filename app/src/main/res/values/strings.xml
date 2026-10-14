@@ -186,6 +186,15 @@
     <string name="quality_medium">Medium</string>
     <string name="quality_low">Low (data saver)</string>
     <string name="settings_autoplay_next_song">Autoplay next song</string>
+    <string name="settings_loop_mode">Loop</string>
+    <string name="loop_infinite">Infinite</string>
+    <string name="loop_count_fmt">Repeat %1$d times</string>
+    <string name="loop_count_value_fmt">%1$d times</string>
+    <string name="loop_timer_fmt">Timer (%1$d min)</string>
+    <string name="loop_count_title">How many times should the song repeat?</string>
+    <string name="loop_timer_title">How long should the loop run?</string>
+    <string name="loop_minutes_fmt">%1$d minutes</string>
+    <string name="cd_loop">Loop</string>
     <string name="default_quality_note">Used when a video starts; if the selected quality is not available the next lower one is played</string>
 
     <!-- Crash logs (local, Firebase-free crash reporting) -->

@@ -94,6 +94,7 @@ SparkTube APKs are a different app and will not overwrite Open Tube.
 | ▶️ | **Built-in player** | Powered by Media3 / ExoPlayer with `PlayerView` |
 | 🕘 | **Watch history** | Stored locally on your device |
 | ⭐ | **Favorites** | Save videos locally — nothing leaves your phone |
+| 🔁 | **Music loop** | Repeat the current song forever, a set number of times, or for a timer — remembered across sessions |
 | 🌙 | **Dark Material 3 UI** | Modern dark theme built on Material Design 3 |
 | 🔒 | **Anonymous by design** | No account, no API keys, no tracking |
 | 🚫 | **No live streams** | Filtered out of the feed, search, and player |

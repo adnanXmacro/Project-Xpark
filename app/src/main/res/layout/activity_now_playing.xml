@@ -207,7 +207,7 @@
                 app:tint="@color/on_surface" />
         </LinearLayout>
 
-        <!-- Radio · Download -->
+        <!-- Loop · Radio · Download -->
         <LinearLayout
             android:id="@+id/actionsRow"
             android:layout_width="match_parent"
@@ -215,6 +215,16 @@
             android:layout_marginTop="6dp"
             android:gravity="center"
             android:orientation="horizontal">
+
+            <ImageButton
+                android:id="@+id/loopButton"
+                android:layout_width="0dp"
+                android:layout_height="46dp"
+                android:layout_weight="1"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:contentDescription="@string/cd_loop"
+                android:src="@drawable/ic_repeat"
+                app:tint="@color/on_surface" />
 
             <ImageButton
                 android:id="@+id/radioButton"

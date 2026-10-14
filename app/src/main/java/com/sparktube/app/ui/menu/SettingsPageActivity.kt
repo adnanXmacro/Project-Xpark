@@ -21,6 +21,7 @@ import com.sparktube.app.data.RecommendEngine
 import com.sparktube.app.databinding.ActivitySettingsPageBinding
 import com.sparktube.app.download.DownloadCenter
 import com.sparktube.app.playback.PlaybackCenter
+import com.sparktube.app.ui.music.MusicLoopUi
 import com.sparktube.app.util.AppPrefs
 import com.sparktube.app.util.CrashReporter
 import com.sparktube.app.util.Themes
@@ -455,6 +456,11 @@ class SettingsPageActivity : AppCompatActivity() {
                 AppPrefs.musicAutoplayNext = !AppPrefs.musicAutoplayNext
                 PlaybackCenter.applyMusicAutoplay()
                 render()
+            }
+        )
+        content.addView(
+            menuRow(getString(R.string.settings_loop_mode), MusicLoopUi.label(this)) {
+                MusicLoopUi.showPicker(this) { render() }
             }
         )
     }

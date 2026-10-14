@@ -13,6 +13,9 @@ object AppPrefs {
     private const val KEY_SMART_STREAMING = "smart_streaming"
     private const val KEY_MUSIC_AUDIO_QUALITY = "music_audio_quality"
     private const val KEY_MUSIC_AUTOPLAY_NEXT = "music_autoplay_next"
+    private const val KEY_MUSIC_LOOP_MODE = "music_loop_mode"
+    private const val KEY_MUSIC_LOOP_COUNT = "music_loop_count"
+    private const val KEY_MUSIC_LOOP_MINUTES = "music_loop_minutes"
     private const val KEY_ANIMATIONS = "animations"
 
     // Default video quality: separate values for Wi-Fi and mobile data.
@@ -38,6 +41,16 @@ object AppPrefs {
     const val SCALE_FIT = "fit"
     const val SCALE_CROP = "crop"
     const val SCALE_STRETCH = "stretch"
+
+    // Music loop modes: the current song repeats forever, a fixed number of
+    // extra times, or until a timer runs out.
+    const val LOOP_OFF = "off"
+    const val LOOP_INFINITE = "infinite"
+    const val LOOP_COUNT = "count"
+    const val LOOP_TIMER = "timer"
+
+    const val DEFAULT_LOOP_COUNT = 3
+    const val DEFAULT_LOOP_MINUTES = 30
 
     private lateinit var sp: SharedPreferences
 
@@ -137,6 +150,30 @@ object AppPrefs {
         get() = sp.getBoolean(KEY_MUSIC_AUTOPLAY_NEXT, true)
         set(value) {
             sp.edit().putBoolean(KEY_MUSIC_AUTOPLAY_NEXT, value).apply()
+        }
+
+    /**
+     * How the current song loops: [LOOP_OFF], [LOOP_INFINITE], [LOOP_COUNT]
+     * or [LOOP_TIMER]. Persisted so the choice survives app restarts.
+     */
+    var musicLoopMode: String
+        get() = sp.getString(KEY_MUSIC_LOOP_MODE, LOOP_OFF) ?: LOOP_OFF
+        set(value) {
+            sp.edit().putString(KEY_MUSIC_LOOP_MODE, value).apply()
+        }
+
+    /** Extra repeats for [LOOP_COUNT] (min 1). */
+    var musicLoopCount: Int
+        get() = sp.getInt(KEY_MUSIC_LOOP_COUNT, DEFAULT_LOOP_COUNT).coerceAtLeast(1)
+        set(value) {
+            sp.edit().putInt(KEY_MUSIC_LOOP_COUNT, value.coerceAtLeast(1)).apply()
+        }
+
+    /** Minutes to keep looping for [LOOP_TIMER] (min 1). */
+    var musicLoopMinutes: Int
+        get() = sp.getInt(KEY_MUSIC_LOOP_MINUTES, DEFAULT_LOOP_MINUTES).coerceAtLeast(1)
+        set(value) {
+            sp.edit().putInt(KEY_MUSIC_LOOP_MINUTES, value.coerceAtLeast(1)).apply()
         }
 
     /** UI animations (tab switches, transitions): on by default. */

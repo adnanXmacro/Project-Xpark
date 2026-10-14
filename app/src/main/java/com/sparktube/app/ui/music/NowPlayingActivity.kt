@@ -96,6 +96,9 @@ class NowPlayingActivity : AppCompatActivity() {
         }
         binding.radioButton.setOnClickListener { restartRadio() }
         binding.downloadButton.setOnClickListener { onDownloadClicked() }
+        binding.loopButton.setOnClickListener {
+            MusicLoopUi.showPicker(this) { bindLoopButton() }
+        }
         binding.queueButton.setOnClickListener { showQueue() }
         binding.upNextCard.setOnClickListener { showQueue() }
 
@@ -207,6 +210,7 @@ class NowPlayingActivity : AppCompatActivity() {
         binding.playingLabel.isVisible = true
         bindPlayButton()
         bindFavorite()
+        bindLoopButton()
         bindUpNext()
         updateProgress()
         updateDownloadState()
@@ -261,6 +265,18 @@ class NowPlayingActivity : AppCompatActivity() {
 
     private fun showQueue() {
         QueueSheet(this).show()
+    }
+
+    /** Reflects the persisted loop mode: green + repeat-one icon while looping. */
+    private fun bindLoopButton() {
+        val mode = AppPrefs.musicLoopMode
+        binding.loopButton.setImageResource(
+            if (mode == AppPrefs.LOOP_INFINITE) R.drawable.ic_repeat_one else R.drawable.ic_repeat
+        )
+        val active = MusicLoopUi.isActive()
+        binding.loopButton.setColorFilter(
+            getColor(if (active) R.color.music_green else R.color.on_surface)
+        )
     }
 
     private fun bindFavorite() {
