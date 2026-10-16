@@ -350,4 +350,13 @@
     <string name="playing_from_queue">Playing from your queue</string>
     <string name="music_play_all">Play all</string>
     <string name="music_songs_fmt">%1$d songs</string>
+    <string name="player_seek_forward_fmt">+%1$d seconds</string>
+    <string name="player_seek_back_fmt">-%1$d seconds</string>
+    <string name="player_scrub_forward_fmt">+%1$d s</string>
+    <string name="player_scrub_back_fmt">-%1$d s</string>
+    <string name="player_speed_badge">%1$sx</string>
+    <string name="changelog_124_added_gestures">Video player gestures: double-tap the left or right side of the video to rewind or forward 10 seconds, and keep tapping to skip further.</string>
+    <string name="changelog_124_improved_tap">Tap the video to play or pause, and hold it to watch at 2x speed until you let go.</string>
+    <string name="changelog_124_improved_scrub">Drag sideways on the video to scrub, with an on-screen position preview while you drag.</string>
+    <string name="changelog_124_improved_feedback">Seeking, pausing and scrubbing now show clear on-screen feedback over the video.</string>
 </resources>

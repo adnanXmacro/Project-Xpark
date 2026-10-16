@@ -80,6 +80,22 @@ object Changelog {
      */
     fun fallback(context: Context, version: String): List<ChangelogSection> {
         val v = version.removePrefix("v").removePrefix("V")
+        if (v == "1.2.4") {
+            return listOf(
+                ChangelogSection(
+                    context.getString(R.string.update_section_added),
+                    listOf(context.getString(R.string.changelog_124_added_gestures))
+                ),
+                ChangelogSection(
+                    context.getString(R.string.update_section_improved),
+                    listOf(
+                        context.getString(R.string.changelog_124_improved_tap),
+                        context.getString(R.string.changelog_124_improved_scrub),
+                        context.getString(R.string.changelog_124_improved_feedback)
+                    )
+                )
+            )
+        }
         if (v == "1.2.3") {
             return listOf(
                 ChangelogSection(

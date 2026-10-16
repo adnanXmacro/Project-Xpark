@@ -10,12 +10,14 @@ import android.os.Build
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
+import android.os.SystemClock
 import android.text.method.LinkMovementMethod
 import android.util.Rational
 import android.util.TypedValue
 import android.view.GestureDetector
 import android.view.MotionEvent
 import android.view.View
+import android.view.ViewConfiguration
 import android.view.ViewGroup
 import android.view.WindowManager
 import android.widget.LinearLayout
@@ -83,6 +85,30 @@ class PlayerActivity : AppCompatActivity() {
 
     private var swipeTriggered = false
     private lateinit var gestureDetector: GestureDetector
+
+    // ----- Video gestures (double-tap seek / tap play-pause / hold 2x / scrub) -----
+
+    /** Pixel slop that separates a tap from a drag, from the system config. */
+    private var touchSlop = 0
+
+    /** Where the finger first landed, and how far it has since moved. */
+    private var downX = 0f
+    private var downY = 0f
+
+    /** Set once a drag's direction (horizontal scrub vs. vertical minimize) is known. */
+    private var dragDecided = false
+    private var scrubbing = false
+    private var scrubStartPosition = 0L
+    private var scrubTargetPosition = 0L
+
+    /** True while the finger is held down for the 2x speed gesture. */
+    private var holdingSpeed = false
+    private var speedBeforeHold = 1f
+
+    /** Double-tap accumulation: same side within [SEEK_ACCUM_WINDOW_MS] keeps adding. */
+    private var lastSeekSide = 0
+    private var seekAccumResetAt = 0L
+    private var seekSessionStart = 0L
 
     /** Mirrors the built-in controller's visibility (gear / seek controls). */
     private var controllerVisible = false
@@ -226,10 +252,11 @@ class PlayerActivity : AppCompatActivity() {
         binding.scaleButton.setOnClickListener { cycleScaleMode() }
         applyScaleMode()
 
+        touchSlop = ViewConfiguration.get(this).scaledTouchSlop
         gestureDetector = GestureDetector(this, object : GestureDetector.SimpleOnGestureListener() {
             override fun onDown(e: MotionEvent): Boolean {
                 swipeTriggered = false
-                return false
+                return true
             }
 
             override fun onScroll(
@@ -255,11 +282,25 @@ class PlayerActivity : AppCompatActivity() {
                 }
                 return false
             }
+
+            /**
+             * A plain tap on the video toggles play/pause and reveals the
+             * control bar (which then auto-hides), matching the "tap the
+             * video to pause" behaviour of the official app.
+             */
+            override fun onSingleTapConfirmed(e: MotionEvent): Boolean {
+                PlaybackCenter.togglePlayPause()
+                binding.playerView.showController()
+                return true
+            }
+
+            /** Double-tap left/right to rewind/forward, accumulating on repeat taps. */
+            override fun onDoubleTap(e: MotionEvent): Boolean = onDoubleTapSeek(e)
+
+            /** Hold the video to scrub at double speed while the finger stays down. */
+            override fun onLongPress(e: MotionEvent) = beginHoldSpeed()
         })
-        binding.playerView.setOnTouchListener { v, event ->
-            gestureDetector.onTouchEvent(event)
-            v.onTouchEvent(event)
-        }
+        binding.playerView.setOnTouchListener { _, event -> handlePlayerTouch(event) }
 
         hookGearMenu()
 
@@ -293,6 +334,161 @@ class PlayerActivity : AppCompatActivity() {
     private fun hookGearMenu() {
         val gear = binding.playerView.findViewById<View>(Media3R.id.exo_settings)
         gear?.setOnClickListener { showVideoSettingsSheet() }
+    }
+
+    // ----- Video gesture handling -----
+
+    /**
+     * Single entry point for touches on the video surface. The gesture
+     * detector owns taps / double-taps / long-press / the swipe-down-to-minimize,
+     * while a small state machine here decides whether a drag is a horizontal
+     * scrub (seek preview) and commits it on release. Returning true keeps the
+     * events away from the built-in controller, whose own buttons are children
+     * and still receive their taps directly.
+     */
+    private fun handlePlayerTouch(event: MotionEvent): Boolean {
+        gestureDetector.onTouchEvent(event)
+        when (event.actionMasked) {
+            MotionEvent.ACTION_DOWN -> {
+                downX = event.x
+                downY = event.y
+                dragDecided = false
+                scrubbing = false
+            }
+            MotionEvent.ACTION_MOVE -> {
+                if (!dragDecided) {
+                    val dx = kotlin.math.abs(event.x - downX)
+                    val dy = kotlin.math.abs(event.y - downY)
+                    if (dx > touchSlop || dy > touchSlop) {
+                        dragDecided = true
+                        // Skip scrubbing on live / unknown-duration playback.
+                        scrubbing = dx > dy && PlaybackCenter.durationMs > 0
+                        if (scrubbing) beginScrub()
+                    }
+                }
+                if (scrubbing) {
+                    updateScrub(event.x)
+                    return true
+                }
+            }
+            MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL -> {
+                if (scrubbing) {
+                    commitScrub()
+                    scrubbing = false
+                    dragDecided = false
+                    return true
+                }
+                if (holdingSpeed) endHoldSpeed()
+            }
+        }
+        return true
+    }
+
+    /** Double-tap seek: forward on the right half, rewind on the left. */
+    private fun onDoubleTapSeek(e: MotionEvent): Boolean {
+        val duration = PlaybackCenter.durationMs
+        if (duration <= 0) return false
+        val width = binding.playerView.width.coerceAtLeast(1)
+        val forward = e.x >= width / 2f
+        val side = if (forward) 1 else -1
+        val now = SystemClock.elapsedRealtime()
+
+        // A new tap on the other side (or after the pause) starts a fresh
+        // session; repeated taps on the same side stack the skipped time.
+        if (side != lastSeekSide || now >= seekAccumResetAt) {
+            seekSessionStart = PlaybackCenter.positionMs
+        }
+        lastSeekSide = side
+        seekAccumResetAt = now + SEEK_ACCUM_WINDOW_MS
+
+        val step = if (forward) SEEK_STEP_MS else -SEEK_STEP_MS
+        val target = (PlaybackCenter.positionMs + step).coerceIn(0L, duration)
+        PlaybackCenter.seekTo(target)
+        showSeekOverlay(forward, kotlin.math.abs(target - seekSessionStart))
+        return true
+    }
+
+    /** Shows the forward/rewind bubble and flashes the tapped half. */
+    private fun showSeekOverlay(forward: Boolean, movedMs: Long) {
+        binding.seekIndicatorIcon.setImageResource(
+            if (forward) R.drawable.ic_seek_forward else R.drawable.ic_seek_back
+        )
+        binding.seekIndicatorText.text = getString(
+            if (forward) R.string.player_seek_forward_fmt else R.string.player_seek_back_fmt,
+            (movedMs / 1000).coerceAtLeast(1)
+        )
+        val flash = if (forward) binding.seekFlashRight else binding.seekFlashLeft
+        flash.animate().cancel()
+        flash.alpha = SEEK_FLASH_ALPHA
+        flash.animate().alpha(0f).setDuration(SEEK_FLASH_FADE_MS).start()
+
+        binding.seekIndicator.animate().cancel()
+        binding.seekIndicator.alpha = 1f
+        binding.seekIndicator.animate()
+            .alpha(0f)
+            .setStartDelay(SEEK_BADGE_HOLD_MS)
+            .setDuration(SEEK_BADGE_FADE_MS)
+            .start()
+    }
+
+    private fun beginScrub() {
+        scrubStartPosition = PlaybackCenter.positionMs
+        scrubTargetPosition = scrubStartPosition
+        binding.scrubIndicator.animate().cancel()
+        binding.scrubIndicator.alpha = 1f
+        renderScrub(0L)
+    }
+
+    private fun updateScrub(x: Float) {
+        val duration = PlaybackCenter.durationMs
+        if (duration <= 0) return
+        val width = binding.playerView.width.coerceAtLeast(1)
+        val delta = ((x - downX) / width * SCRUB_SPAN_MS).toLong()
+        scrubTargetPosition = (scrubStartPosition + delta).coerceIn(0L, duration)
+        renderScrub(scrubTargetPosition - scrubStartPosition)
+    }
+
+    private fun renderScrub(deltaMs: Long) {
+        binding.scrubTimeText.text = Formatters.formatDuration(scrubTargetPosition / 1000)
+        val seconds = kotlin.math.abs(deltaMs) / 1000
+        binding.scrubDeltaText.text = when {
+            seconds < 1 -> ""
+            deltaMs >= 0 -> getString(R.string.player_scrub_forward_fmt, seconds)
+            else -> getString(R.string.player_scrub_back_fmt, seconds)
+        }
+    }
+
+    private fun commitScrub() {
+        PlaybackCenter.seekTo(scrubTargetPosition)
+        binding.scrubIndicator.animate().alpha(0f).setDuration(200).start()
+    }
+
+    private fun beginHoldSpeed() {
+        if (holdingSpeed || PlaybackCenter.durationMs <= 0) return
+        holdingSpeed = true
+        speedBeforeHold = PlaybackCenter.playbackSpeed
+        if (speedBeforeHold < HOLD_SPEED) PlaybackCenter.setSpeed(HOLD_SPEED)
+        binding.speedIndicatorText.text =
+            getString(R.string.player_speed_badge, HOLD_SPEED.toInt().toString())
+        binding.speedIndicator.animate().cancel()
+        binding.speedIndicator.alpha = 1f
+    }
+
+    private fun endHoldSpeed() {
+        if (!holdingSpeed) return
+        holdingSpeed = false
+        PlaybackCenter.setSpeed(speedBeforeHold)
+        binding.speedIndicator.animate().alpha(0f).setDuration(150).start()
+    }
+
+    /** Releases the 2x hold and hides the gesture bubbles when leaving the page. */
+    private fun resetVideoGestures() {
+        if (holdingSpeed) endHoldSpeed()
+        if (scrubbing) {
+            scrubbing = false
+            dragDecided = false
+            binding.scrubIndicator.alpha = 0f
+        }
     }
 
     /** Fullscreen + scale buttons follow the built-in controller's visibility. */
@@ -483,6 +679,7 @@ class PlayerActivity : AppCompatActivity() {
         super.onStop()
         downloadHandler.removeCallbacks(downloadPoll)
         PlaybackCenter.removeListener(playbackListener)
+        resetVideoGestures()
         // Return to sensor portrait so the next video starts the standard way.
         if (requestedOrientation != ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED) {
             requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED
@@ -1352,6 +1549,20 @@ class PlayerActivity : AppCompatActivity() {
         private const val EXTRA_ATTACH = "extra_attach"
         private const val SWIPE_MIN_DISTANCE = 130f
         private const val DESC_COLLAPSED_LINES = 3
+
+        // ----- Video gestures -----
+        /** Double-tap skip distance. */
+        private const val SEEK_STEP_MS = 10_000L
+        /** Repeated same-side double-taps inside this window keep stacking. */
+        private const val SEEK_ACCUM_WINDOW_MS = 900L
+        /** Horizontal drag that spans the full video width covers this much time. */
+        private const val SCRUB_SPAN_MS = 120_000L
+        /** Speed applied while the video is held down. */
+        private const val HOLD_SPEED = 2f
+        private const val SEEK_FLASH_ALPHA = 0.22f
+        private const val SEEK_FLASH_FADE_MS = 450L
+        private const val SEEK_BADGE_HOLD_MS = 450L
+        private const val SEEK_BADGE_FADE_MS = 250L
 
         fun start(context: Context, model: com.sparktube.app.ui.common.VideoUiModel) {
             val intent = Intent(context, PlayerActivity::class.java).apply {
