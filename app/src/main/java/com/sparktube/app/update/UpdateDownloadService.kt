@@ -167,14 +167,22 @@ class UpdateDownloadService : Service() {
 
     private fun progressNotification(version: String, percent: Int, indeterminate: Boolean): Notification {
         val text = if (indeterminate) {
-            getString(R.string.update_downloading, version)
+            getString(R.string.update_notif_indeterminate, version)
         } else {
-            getString(R.string.update_download_progress, version, percent)
+            getString(R.string.update_notif_progress, version, percent)
         }
         return NotificationCompat.Builder(this, CHANNEL_ID)
-            .setSmallIcon(android.R.drawable.stat_sys_download)
-            .setContentTitle(getString(R.string.update_available_title))
+            .setSmallIcon(R.drawable.ic_notif_update)
+            .setColor(NOTIF_COLOR)
+            .setContentTitle(getString(R.string.update_notif_title))
             .setContentText(text)
+            // The "app will close once" heads-up is important, so surface it
+            // under the progress line and in the expanded view too.
+            .setSubText(getString(R.string.update_close_note))
+            .setStyle(
+                NotificationCompat.BigTextStyle()
+                    .bigText(text + "\n" + getString(R.string.update_close_note))
+            )
             .setOngoing(true)
             .setOnlyAlertOnce(true)
             .setProgress(100, percent, indeterminate)
@@ -197,9 +205,18 @@ class UpdateDownloadService : Service() {
             PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
         )
         return NotificationCompat.Builder(this, CHANNEL_ID)
-            .setSmallIcon(android.R.drawable.stat_sys_download_done)
+            .setSmallIcon(R.drawable.ic_notif_update)
+            .setColor(NOTIF_COLOR)
             .setContentTitle(getString(R.string.update_ready_to_install, version))
             .setContentText(getString(R.string.update_tap_to_install))
+            .setSubText(getString(R.string.update_close_note))
+            .setStyle(
+                NotificationCompat.BigTextStyle()
+                    .bigText(
+                        getString(R.string.update_tap_to_install) + "\n" +
+                            getString(R.string.update_close_note)
+                    )
+            )
             .setAutoCancel(true)
             .setContentIntent(tap)
             .build()
@@ -208,6 +225,7 @@ class UpdateDownloadService : Service() {
     private fun failedNotification(): Notification =
         NotificationCompat.Builder(this, CHANNEL_ID)
             .setSmallIcon(android.R.drawable.stat_notify_error)
+            .setColor(NOTIF_COLOR)
             .setContentTitle(getString(R.string.update_download_failed))
             .setAutoCancel(true)
             .build()
@@ -245,6 +263,9 @@ class UpdateDownloadService : Service() {
         const val EXTRA_TAG = "tag"
         const val CHANNEL_ID = "app_updates"
         const val NOTIF_ID = 4201
+
+        /** Spark red, matching the app accent used by the update dialog. */
+        private const val NOTIF_COLOR = 0xFFF03E3E.toInt()
 
         @Volatile
         var running = false

@@ -148,20 +148,9 @@ class MainActivity : AppCompatActivity() {
         lifecycleScope.launch {
             val release = UpdateChecker.fetchLatest() ?: return@launch
             if (UpdateChecker.isNewer(BuildConfig.VERSION_NAME, release.tag)) {
-                val body = release.body.ifBlank {
-                    "Version ${release.tag.removePrefix("v")} is available."
+                com.sparktube.app.ui.update.UpdatePrompt.show(this@MainActivity, release) {
+                    UpdateChecker.startDownload(this@MainActivity, release)
                 }
-                androidx.appcompat.app.AlertDialog.Builder(this@MainActivity)
-                    .setTitle(
-                        getString(R.string.update_available_title) +
-                            " · ${release.tag.removePrefix("v")}"
-                    )
-                    .setMessage(body)
-                    .setPositiveButton(R.string.update_download) { _, _ ->
-                        UpdateChecker.startDownload(this@MainActivity, release)
-                    }
-                    .setNegativeButton(R.string.later, null)
-                    .show()
             }
         }
     }

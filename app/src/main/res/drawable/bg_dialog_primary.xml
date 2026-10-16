@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Filled accent button used by custom dialogs. -->
+<ripple xmlns:android="http://schemas.android.com/apk/res/android"
+    android:color="@color/action_pill_ripple">
+    <item>
+        <shape>
+            <solid android:color="?attr/accent" />
+            <corners android:radius="24dp" />
+        </shape>
+    </item>
+</ripple>

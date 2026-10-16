@@ -1,8 +1,9 @@
 package com.sparktube.app.util
 
+import android.app.Activity
 import android.content.Context
-import androidx.appcompat.app.AlertDialog
 import com.sparktube.app.R
+import com.sparktube.app.ui.update.UpdatePrompt
 import com.sparktube.app.update.UpdateDownloadService
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -87,10 +88,13 @@ object UpdateChecker {
         val already = UpdateDownloadService.running
         UpdateDownloadService.start(context, release)
         if (already || !UpdateDownloadService.running || release.apkUrl.isNullOrBlank()) return
-        AlertDialog.Builder(context)
-            .setTitle(R.string.update_download_started_title)
-            .setMessage(R.string.update_download_started)
-            .setPositiveButton(android.R.string.ok, null)
-            .show()
+        (context as? Activity)?.let { activity ->
+            UpdatePrompt.showNotice(
+                activity,
+                activity.getString(R.string.update_download_started_title),
+                activity.getString(R.string.update_download_started) +
+                    "\n\n" + activity.getString(R.string.update_close_note)
+            )
+        }
     }
 }

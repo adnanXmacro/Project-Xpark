@@ -21,6 +21,7 @@ import com.sparktube.app.R
 import com.sparktube.app.data.Countries
 import com.sparktube.app.data.YtRepository
 import com.sparktube.app.databinding.FragmentMenuBinding
+import com.sparktube.app.ui.update.UpdatePrompt
 import com.sparktube.app.util.AppPrefs
 import com.sparktube.app.util.BackupManager
 import com.sparktube.app.util.Themes
@@ -259,23 +260,15 @@ class MenuFragment : Fragment() {
     }
 
     private fun showUpdateDialog(release: UpdateChecker.Release, manual: Boolean) {
-        val ctx = context ?: return
+        val activity = activity ?: return
         if (!manual) {
             // Silent on-open check: only nag once per app launch.
             if (UpdateChecker.silentCheckDone) return
             UpdateChecker.silentCheckDone = true
         }
-        val body = release.body.ifBlank {
-            "Version ${release.tag.removePrefix("v")} is available."
+        UpdatePrompt.show(activity, release) {
+            UpdateChecker.startDownload(activity, release)
         }
-        AlertDialog.Builder(ctx)
-            .setTitle(getString(R.string.update_available_title) + " · ${release.tag.removePrefix("v")}")
-            .setMessage(body)
-            .setPositiveButton(R.string.update_download) { _, _ ->
-                UpdateChecker.startDownload(ctx, release)
-            }
-            .setNegativeButton(R.string.later, null)
-            .show()
     }
 
     private fun showAbout() {
