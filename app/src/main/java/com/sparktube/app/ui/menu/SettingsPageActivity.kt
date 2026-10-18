@@ -438,6 +438,20 @@ class SettingsPageActivity : AppCompatActivity() {
                 render()
             }
         )
+        content.addView(
+            menuRow(getString(R.string.player_controls_title), playerControlsSummary()) {
+                startActivity(
+                    Intent(this, com.sparktube.app.player.PlayerControlsActivity::class.java)
+                )
+            }
+        )
+    }
+
+    /** e.g. "8 controls" — a quick hint of how many are in the player. */
+    private fun playerControlsSummary(): String {
+        val count = com.sparktube.app.player.PlayerControlRegistry
+            .sanitizeVisible(AppPrefs.playerControls).size
+        return resources.getQuantityString(R.plurals.player_controls_count, count, count)
     }
 
     // ----- Music -----

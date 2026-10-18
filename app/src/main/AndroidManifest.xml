@@ -68,6 +68,11 @@
             android:exported="false" />
 
         <activity
+            android:name=".player.PlayerControlsActivity"
+            android:exported="false"
+            android:label="@string/player_controls_title" />
+
+        <activity
             android:name=".ui.playlist.YoutubePlaylistActivity"
             android:exported="false"
             android:configChanges="orientation|screenSize|keyboardHidden|screenLayout|smallestScreenSize|uiMode" />

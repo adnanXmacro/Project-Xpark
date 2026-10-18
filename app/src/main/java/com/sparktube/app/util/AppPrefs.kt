@@ -27,6 +27,24 @@ object AppPrefs {
     // Fullscreen video scale mode: fit / crop / stretch.
     private const val KEY_FULLSCREEN_SCALE = "fullscreen_scale"
 
+    // ----- Custom video player controls -----
+
+    /** Ordered, comma-separated ids of the controls visible in the player. */
+    private const val KEY_PLAYER_CONTROLS = "player_controls"
+    /** Ordered, comma-separated playback-speed presets. */
+    private const val KEY_PLAYER_SPEED_PRESETS = "player_speed_presets"
+    /** Default speed applied when a video starts. */
+    private const val KEY_PLAYER_DEFAULT_SPEED = "player_default_speed"
+    /** Hide the overlay after this many milliseconds of inactivity. */
+    private const val KEY_PLAYER_CONTROLS_TIMEOUT = "player_controls_timeout"
+    /** Loop the current video forever instead of advancing the queue. */
+    private const val KEY_PLAYER_LOOP_VIDEO = "player_loop_video"
+
+    val DEFAULT_SPEED_PRESETS = listOf(0.5f, 0.75f, 1f, 1.25f, 1.5f, 1.75f, 2f)
+
+    /** Sensible choices for the auto-hide delay, in milliseconds. */
+    val CONTROLS_TIMEOUT_CHOICES = listOf(2000, 3000, 5000, 8000, 12000)
+
     const val DEFAULT_COUNTRY = "US"
 
     const val THEME_AUTO = "auto"
@@ -188,5 +206,53 @@ object AppPrefs {
         get() = sp.getString(KEY_FULLSCREEN_SCALE, SCALE_FIT) ?: SCALE_FIT
         set(value) {
             sp.edit().putString(KEY_FULLSCREEN_SCALE, value).apply()
+        }
+
+    // ----- Custom video player controls -----
+
+    /**
+     * Ordered ids of the controls visible in the video player. Unknown ids are
+     * filtered out lazily by the caller (see PlayerControlRegistry), so an old
+     * preference never crashes the player after a catalog change.
+     */
+    var playerControls: List<String>
+        get() = sp.getString(KEY_PLAYER_CONTROLS, null)
+            ?.split(',')
+            ?.filter { it.isNotBlank() }
+            ?: com.sparktube.app.player.PlayerControlRegistry.defaultVisibleIds
+        set(value) {
+            sp.edit().putString(KEY_PLAYER_CONTROLS, value.joinToString(",")).apply()
+        }
+
+    /** Ordered playback-speed choices offered by the speed control. */
+    var playerSpeedPresets: List<Float>
+        get() = sp.getString(KEY_PLAYER_SPEED_PRESETS, null)
+            ?.split(',')
+            ?.mapNotNull { it.toFloatOrNull() }
+            ?.takeIf { it.isNotEmpty() }
+            ?: DEFAULT_SPEED_PRESETS
+        set(value) {
+            sp.edit().putString(KEY_PLAYER_SPEED_PRESETS, value.joinToString(",")).apply()
+        }
+
+    /** Speed applied automatically when a video starts (1.0 = normal). */
+    var playerDefaultSpeed: Float
+        get() = sp.getFloat(KEY_PLAYER_DEFAULT_SPEED, 1.0f)
+        set(value) {
+            sp.edit().putFloat(KEY_PLAYER_DEFAULT_SPEED, value).apply()
+        }
+
+    /** Milliseconds of inactivity before the player overlay fades out. */
+    var playerControlsTimeout: Int
+        get() = sp.getInt(KEY_PLAYER_CONTROLS_TIMEOUT, 4000)
+        set(value) {
+            sp.edit().putInt(KEY_PLAYER_CONTROLS_TIMEOUT, value).apply()
+        }
+
+    /** Loop the current video (not just music) forever, YouTube-style. */
+    var playerLoopVideo: Boolean
+        get() = sp.getBoolean(KEY_PLAYER_LOOP_VIDEO, false)
+        set(value) {
+            sp.edit().putBoolean(KEY_PLAYER_LOOP_VIDEO, value).apply()
         }
 }

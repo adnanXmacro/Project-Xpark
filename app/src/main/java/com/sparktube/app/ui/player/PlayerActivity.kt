@@ -51,6 +51,9 @@ import com.sparktube.app.playback.QueueEntry
 import com.sparktube.app.playback.StreamCatalog
 import com.sparktube.app.playback.effectiveHeight
 import com.sparktube.app.playback.toVideoEntry
+import com.sparktube.app.player.PlayerControlRegistry
+import com.sparktube.app.player.PlayerControlState
+import com.sparktube.app.player.PlayerControlsOverlay
 import com.sparktube.app.ui.channel.ChannelActivity
 import com.sparktube.app.ui.common.CommentAdapter
 import com.sparktube.app.ui.common.VideoAdapter
@@ -85,6 +88,18 @@ class PlayerActivity : AppCompatActivity() {
 
     private var swipeTriggered = false
     private lateinit var gestureDetector: GestureDetector
+
+    /** The custom, configurable overlay that replaces the Media3 controller. */
+    private lateinit var playerOverlay: PlayerControlsOverlay
+
+    /** Polls position / buffering so the overlay stays in sync while visible. */
+    private val overlayPoll = object : Runnable {
+        override fun run() {
+            if (!playerOverlay.isVisible) return
+            playerOverlay.updateState(buildControlState())
+            downloadHandler.postDelayed(this, OVERLAY_POLL_MS)
+        }
+    }
 
     // ----- Video gestures (double-tap seek / tap play-pause / hold 2x / scrub) -----
 
@@ -136,6 +151,7 @@ class PlayerActivity : AppCompatActivity() {
 
         override fun onCatalogReady() {
             bindCatalog()
+            refreshOverlay()
         }
 
         override fun onError(message: String) {
@@ -151,6 +167,10 @@ class PlayerActivity : AppCompatActivity() {
         override fun onFavoriteChanged(url: String, isFavorite: Boolean) = updateFavoriteUi()
 
         override fun onAudioOnlyChanged(audioOnly: Boolean) = bindCatalog()
+
+        override fun onPlaybackStateChanged(isPlaying: Boolean) {
+            if (::playerOverlay.isInitialized) playerOverlay.updateState(buildControlState())
+        }
 
         override fun onNotice(message: String) {
             Toast.makeText(this@PlayerActivity, message, Toast.LENGTH_SHORT).show()
@@ -192,20 +212,20 @@ class PlayerActivity : AppCompatActivity() {
         // Watching a video should keep the screen on.
         window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
 
-        // The fullscreen + scale buttons only appear together with the
-        // player's own controls (gear / seek bar), like the official app.
+        // The built-in Media3 controller is disabled (use_controller="false");
+        // this overlay replaces it and is driven entirely by the control
+        // registry + the user's saved layout.
+        playerOverlay = PlayerControlsOverlay(this, binding.playerOverlay, overlayCallbacks)
+        playerOverlay.onVisibilityChanged = { visible ->
+            controllerVisible = visible
+            syncFullscreenButtonVisibility()
+            if (visible) startOverlayPoll() else stopOverlayPoll()
+        }
+        // The corner fullscreen button is now a registry control; keep the old
+        // one hidden so it cannot duplicate it. Scale mode stays a corner
+        // control (it is a fullscreen-only extra, not part of the catalog).
         binding.fullscreenButton.isVisible = false
         binding.scaleButton.isVisible = false
-        // Explicit object: a lambda would be ambiguous between the two
-        // setControllerVisibilityListener overloads.
-        binding.playerView.setControllerVisibilityListener(
-            object : PlayerView.ControllerVisibilityListener {
-                override fun onVisibilityChanged(visibility: Int) {
-                    controllerVisible = visibility == View.VISIBLE
-                    syncFullscreenButtonVisibility()
-                }
-            }
-        )
 
         // Watch-page chrome that depends on the resolved catalog: the action
         // pills and the subscribe button only appear once the video is
@@ -284,23 +304,28 @@ class PlayerActivity : AppCompatActivity() {
             }
 
             /**
-             * A plain tap on the video toggles play/pause and reveals the
-             * control bar (which then auto-hides), matching the "tap the
-             * video to pause" behaviour of the official app.
+             * A plain tap shows the controls, and tapping again hides them —
+             * the standard player behaviour now that the overlay is custom.
              */
             override fun onSingleTapConfirmed(e: MotionEvent): Boolean {
-                PlaybackCenter.togglePlayPause()
-                binding.playerView.showController()
+                playerOverlay.toggle()
                 return true
             }
 
             /** Double-tap left/right to rewind/forward, accumulating on repeat taps. */
-            override fun onDoubleTap(e: MotionEvent): Boolean = onDoubleTapSeek(e)
+            override fun onDoubleTap(e: MotionEvent): Boolean {
+                if (!playerOverlay.isVisible) playerOverlay.show()
+                return onDoubleTapSeek(e)
+            }
 
             /** Hold the video to scrub at double speed while the finger stays down. */
-            override fun onLongPress(e: MotionEvent) = beginHoldSpeed()
+            override fun onLongPress(e: MotionEvent) {
+                if (!playerOverlay.isVisible) playerOverlay.show()
+                beginHoldSpeed()
+            }
         })
         binding.playerView.setOnTouchListener { _, event -> handlePlayerTouch(event) }
+        refreshOverlay()
 
         hookGearMenu()
 
@@ -338,13 +363,88 @@ class PlayerActivity : AppCompatActivity() {
 
     // ----- Video gesture handling -----
 
+    /** Snapshot the overlay uses for availability, icons and values. */
+    private fun buildControlState(): PlayerControlState {
+        val catalog = PlaybackCenter.catalog
+        val height = catalog?.let { PlaybackCenter.effectiveSelectedHeight(it) }
+        val qualityLabel = when {
+            catalog == null -> null
+            height == null -> getString(R.string.quality_auto_short)
+            height == -1 -> getString(R.string.quality_audio_only)
+            else -> "${height}p"
+        }
+        return PlayerControlState(
+            isVideo = PlaybackCenter.mode == PlaybackCenter.Mode.VIDEO &&
+                !PlaybackCenter.audioOnlyMode,
+            isPlaying = PlaybackCenter.isPlaying,
+            isBuffering = PlaybackCenter.isBuffering,
+            isMuted = PlaybackCenter.isMuted,
+            canSeek = PlaybackCenter.durationMs > 0,
+            hasPrevious = PlaybackCenter.queueIndex > 0,
+            hasNext = PlaybackCenter.queueIndex in 0 until PlaybackCenter.queue.size - 1,
+            hasQualityOptions = catalog != null,
+            loopEnabled = PlaybackCenter.isVideoLoopEnabled,
+            isFullscreen =
+                resources.configuration.orientation == Configuration.ORIENTATION_LANDSCAPE,
+            pipSupported = PlayerControlRegistry.pipSupported(),
+            positionMs = PlaybackCenter.positionMs,
+            durationMs = PlaybackCenter.durationMs,
+            speed = PlaybackCenter.playbackSpeed,
+            qualityLabel = qualityLabel
+        )
+    }
+
+    private fun refreshOverlay() {
+        playerOverlay.render(buildControlState())
+    }
+
+    private fun startOverlayPoll() {
+        downloadHandler.removeCallbacks(overlayPoll)
+        downloadHandler.post(overlayPoll)
+    }
+
+    private fun stopOverlayPoll() {
+        downloadHandler.removeCallbacks(overlayPoll)
+    }
+
+    /**
+     * Actions for the configurable controls. Kept as one object so the overlay
+     * never needs to know about sheets, orientation or the playback engine.
+     */
+    private val overlayCallbacks = object : PlayerControlsOverlay.Callbacks {
+        override fun onTogglePlayPause() = PlaybackCenter.togglePlayPause()
+        override fun onSeekBy(deltaMs: Long) =
+            PlaybackCenter.seekTo(PlaybackCenter.positionMs + deltaMs)
+
+        override fun onPrevious() = PlaybackCenter.previous()
+        override fun onNext() = PlaybackCenter.next()
+        override fun onSeekTo(positionMs: Long) = PlaybackCenter.seekTo(positionMs)
+        override fun onSpeed() = showSpeedSheet()
+        override fun onQuality() = showQualitySheet()
+        override fun onMore() = showVideoSettingsSheet()
+        override fun onToggleFullscreen() = toggleFullscreen()
+
+        override fun onToggleLoop() {
+            PlaybackCenter.setVideoLoop(!PlaybackCenter.isVideoLoopEnabled)
+            refreshOverlay()
+        }
+
+        override fun onToggleMute() {
+            PlaybackCenter.setMuted(!PlaybackCenter.isMuted)
+            refreshOverlay()
+        }
+
+        override fun onPip() = enterPipOrToast()
+        override fun onInteraction() = playerOverlay.scheduleHide()
+        override fun positionMs(): Long = PlaybackCenter.positionMs
+        override fun durationMs(): Long = PlaybackCenter.durationMs
+    }
+
     /**
      * Single entry point for touches on the video surface. The gesture
      * detector owns taps / double-taps / long-press / the swipe-down-to-minimize,
      * while a small state machine here decides whether a drag is a horizontal
-     * scrub (seek preview) and commits it on release. Returning true keeps the
-     * events away from the built-in controller, whose own buttons are children
-     * and still receive their taps directly.
+     * scrub (seek preview) and commits it on release.
      */
     private fun handlePlayerTouch(event: MotionEvent): Boolean {
         gestureDetector.onTouchEvent(event)
@@ -491,13 +591,16 @@ class PlayerActivity : AppCompatActivity() {
         }
     }
 
-    /** Fullscreen + scale buttons follow the built-in controller's visibility. */
+    /**
+     * The old corner fullscreen button is gone: fullscreen is now a
+     * configurable control inside the overlay. The scale button remains a
+     * corner extra (Fit / Crop / Stretch) and follows the overlay.
+     */
     private fun syncFullscreenButtonVisibility() {
-        val visible = !isInPictureInPictureMode && controllerVisible
-        binding.fullscreenButton.isVisible = visible
+        binding.fullscreenButton.isVisible = false
         // Fit / Crop / Stretch is a fullscreen-only control: the portrait
         // box always shows the full frame, so the button stays hidden there.
-        binding.scaleButton.isVisible = visible &&
+        binding.scaleButton.isVisible = !isInPictureInPictureMode && controllerVisible &&
             resources.configuration.orientation == Configuration.ORIENTATION_LANDSCAPE
     }
 
@@ -623,6 +726,15 @@ class PlayerActivity : AppCompatActivity() {
         // pick the spinner state up here instead of missing it.
         binding.loading.isVisible = PlaybackCenter.isResolving && !binding.errorView.isVisible
         downloadHandler.post(downloadPoll)
+        if (::playerOverlay.isInitialized) {
+            refreshOverlay()
+            // Coming back from another screen: resume live updates if the
+            // overlay was left visible.
+            if (playerOverlay.isVisible) {
+                startOverlayPoll()
+                playerOverlay.scheduleHide()
+            }
+        }
         if (PlaybackCenter.hasMedia) {
             PlaybackCenter.player.playWhenReady = true
         }
@@ -631,6 +743,9 @@ class PlayerActivity : AppCompatActivity() {
     override fun onResume() {
         super.onResume()
         if (Themes.recreateIfNeeded(this)) return
+        // The control layout may have changed while the customization screen
+        // was open on top of the player.
+        if (::playerOverlay.isInitialized) refreshOverlay()
         applyCloseTransition()
         if (!isInPictureInPictureMode) {
             PlaybackCenter.attachView(binding.playerView)
@@ -678,6 +793,8 @@ class PlayerActivity : AppCompatActivity() {
     override fun onStop() {
         super.onStop()
         downloadHandler.removeCallbacks(downloadPoll)
+        stopOverlayPoll()
+        if (::playerOverlay.isInitialized) playerOverlay.release()
         PlaybackCenter.removeListener(playbackListener)
         resetVideoGestures()
         // Return to sensor portrait so the next video starts the standard way.
@@ -1370,6 +1487,9 @@ class PlayerActivity : AppCompatActivity() {
         val scroll = android.widget.ScrollView(this).apply { addView(root) }
         sheet.setContentView(scroll)
         sheet.behavior.peekHeight = dp(peekDp)
+        // The overlay's values (speed / quality labels, loop state) may have
+        // changed while the sheet was open; re-render once it closes.
+        sheet.setOnDismissListener { refreshOverlay() }
         sheet.show()
     }
 
@@ -1412,6 +1532,14 @@ class PlayerActivity : AppCompatActivity() {
                 }
             )
         }
+        root.addView(
+            sheetMenuRow(getString(R.string.player_controls_edit), "") {
+                sheet.dismiss()
+                startActivity(
+                    Intent(this, com.sparktube.app.player.PlayerControlsActivity::class.java)
+                )
+            }
+        )
 
         showSheet(sheet, root, peekDp = 320)
     }
@@ -1454,6 +1582,7 @@ class PlayerActivity : AppCompatActivity() {
         root.addView(
             sheetRow(getString(R.string.quality_auto), currentHeight == null) {
                 PlaybackCenter.setVideoQuality(null)
+                refreshOverlay()
                 sheet.dismiss()
             }
         )
@@ -1483,7 +1612,7 @@ class PlayerActivity : AppCompatActivity() {
         val root = sheetRoot()
         root.addView(sheetTitle(getString(R.string.settings_speed_section)))
 
-        val speeds = listOf(0.25f, 0.5f, 0.75f, 1.0f, 1.25f, 1.5f, 1.75f, 2.0f)
+        val speeds = AppPrefs.playerSpeedPresets.ifEmpty { AppPrefs.DEFAULT_SPEED_PRESETS }
         val currentSpeed = PlaybackCenter.playbackSpeed
         speeds.forEach { s ->
             root.addView(
@@ -1492,6 +1621,7 @@ class PlayerActivity : AppCompatActivity() {
                     s == currentSpeed
                 ) {
                     PlaybackCenter.setSpeed(s)
+                    refreshOverlay()
                     sheet.dismiss()
                 }
             )
@@ -1563,6 +1693,9 @@ class PlayerActivity : AppCompatActivity() {
         private const val SEEK_FLASH_FADE_MS = 450L
         private const val SEEK_BADGE_HOLD_MS = 450L
         private const val SEEK_BADGE_FADE_MS = 250L
+
+        /** How often the visible overlay refreshes time / buffering state. */
+        private const val OVERLAY_POLL_MS = 500L
 
         fun start(context: Context, model: com.sparktube.app.ui.common.VideoUiModel) {
             val intent = Intent(context, PlayerActivity::class.java).apply {

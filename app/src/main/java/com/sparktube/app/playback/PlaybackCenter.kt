@@ -556,6 +556,9 @@ object PlaybackCenter {
         val playlist = if (start == 0) entries else entries.drop(start)
         stopPlayerNow()
         mode = Mode.AUDIO
+        // The video "default speed" preference is video-only; music always
+        // starts at normal speed.
+        playbackSpeed = 1f
         radioMode = allowRadio
         playlistMode = false
         audioOnlyMode = false
@@ -644,6 +647,37 @@ object PlaybackCenter {
     fun setSpeed(speed: Float) {
         playbackSpeed = speed
         playerRef?.setPlaybackSpeed(speed)
+    }
+
+    // ----- Video-only controls (custom player overlay) -----
+
+    /** True while the current video should repeat forever (music loop untouched). */
+    val isVideoLoopEnabled: Boolean
+        get() = AppPrefs.playerLoopVideo
+
+    /**
+     * Toggles single-item repeat for VIDEO playback only. Music keeps using its
+     * own loop modes ([setMusicLoop]); the two never run at the same time
+     * because repeat mode is re-applied whenever the playback mode changes.
+     */
+    fun setVideoLoop(enabled: Boolean) {
+        AppPrefs.playerLoopVideo = enabled
+        applyVideoLoop()
+    }
+
+    /** Applies the persisted video-loop choice to the player. */
+    fun applyVideoLoop() {
+        val p = playerRef ?: return
+        if (mode != Mode.VIDEO) return
+        p.repeatMode =
+            if (AppPrefs.playerLoopVideo) Player.REPEAT_MODE_ONE else Player.REPEAT_MODE_OFF
+    }
+
+    val isMuted: Boolean get() = playerRef?.volume?.let { it <= 0f } ?: false
+
+    /** Mutes / unmutes without losing the video position or pause state. */
+    fun setMuted(muted: Boolean) {
+        playerRef?.volume = if (muted) 0f else 1f
     }
 
     /** Music settings: pause between songs instead of auto-advancing. */
@@ -932,6 +966,7 @@ object PlaybackCenter {
                 )
             }
         if (sources.isEmpty()) return false
+        if (mode == Mode.VIDEO) playbackSpeed = AppPrefs.playerDefaultSpeed
         val source = if (sources.size == 1) sources[0] else MergingMediaSource(*sources.toTypedArray())
         player.run {
             setMediaSource(source, 0L)
@@ -939,6 +974,7 @@ object PlaybackCenter {
             playWhenReady = true
             setPlaybackSpeed(playbackSpeed)
         }
+        applyVideoLoop()
         return true
     }
 
@@ -976,6 +1012,9 @@ object PlaybackCenter {
         downshiftHeight = null
         dashBlocked = false
         dashActive = false
+        // Each newly started video begins at the user's default speed; the
+        // speed control can still change it for this video afterwards.
+        playbackSpeed = AppPrefs.playerDefaultSpeed
         // Drop the PREVIOUS video's catalog immediately: the watch page
         // listens to onItemChanged and re-binds from the entry alone, so the
         // action pills / subscribe / views of the old video must not linger
@@ -1240,6 +1279,7 @@ object PlaybackCenter {
             playWhenReady = true
             setPlaybackSpeed(speed)
         }
+        applyVideoLoop()
         startStartupWatchdog()
     }
 

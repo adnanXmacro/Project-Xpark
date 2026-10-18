@@ -359,4 +359,54 @@
     <string name="changelog_124_improved_tap">Tap the video to play or pause, and hold it to watch at 2x speed until you let go.</string>
     <string name="changelog_124_improved_scrub">Drag sideways on the video to scrub, with an on-screen position preview while you drag.</string>
     <string name="changelog_124_improved_feedback">Seeking, pausing and scrubbing now show clear on-screen feedback over the video.</string>
+
+    <!-- Custom player controls -->
+    <string name="control_play_pause">Play / pause</string>
+    <string name="control_previous">Previous</string>
+    <string name="control_next">Next</string>
+    <string name="control_rewind">Rewind 10s</string>
+    <string name="control_forward">Forward 10s</string>
+    <string name="control_progress">Progress bar and timestamps</string>
+    <string name="control_speed">Playback speed</string>
+    <string name="control_quality">Quality</string>
+    <string name="control_loop">Loop video</string>
+    <string name="control_mute">Mute</string>
+    <string name="control_pip">Picture-in-picture</string>
+    <string name="control_fullscreen">Fullscreen</string>
+    <string name="control_more">More actions</string>
+    <string name="control_unavailable_pip">Not supported on this device</string>
+    <string name="control_unavailable_video_only">Only available for video</string>
+
+    <string name="player_controls_title">Player controls</string>
+    <string name="player_controls_visible">Visible controls</string>
+    <string name="player_controls_available">Available controls</string>
+    <string name="player_controls_visible_hint">These appear in the player, in this order.</string>
+    <string name="player_controls_available_hint">Add any of these to the player.</string>
+    <string name="player_controls_empty_visible">No controls selected. Add some from below.</string>
+    <string name="player_controls_empty_available">Every control is already in the player.</string>
+    <string name="player_controls_restore">Restore defaults</string>
+    <string name="player_controls_restored">Default layout restored</string>
+    <string name="player_controls_add">Add</string>
+    <string name="player_controls_remove">Remove</string>
+    <string name="player_controls_move_up">Move up</string>
+    <string name="player_controls_move_down">Move down</string>
+    <string name="player_controls_unavailable">Unavailable</string>
+    <string name="player_controls_speed_section">Playback speed</string>
+    <string name="player_controls_speed_presets">Speed presets</string>
+    <string name="player_controls_default_speed">Default speed</string>
+    <string name="player_controls_timeout">Auto-hide controls after</string>
+    <string name="player_controls_timeout_fmt">%1$d seconds</string>
+    <string name="player_controls_edit">Edit controls</string>
+    <string name="player_controls_saved">Saved</string>
+    <plurals name="player_controls_count">
+        <item quantity="one">%1$d control</item>
+        <item quantity="other">%1$d controls</item>
+    </plurals>
+    <string name="player_controls_unavailable_reason">Unavailable: %1$s</string>
+    <string name="player_controls_speed_preset_fmt">%1$sx</string>
+    <string name="player_controls_speed_normal">Normal</string>
+    <string name="changelog_125_added_controls">A fully customizable video player: choose which controls appear, then add, remove and reorder them.</string>
+    <string name="changelog_125_added_catalog">New modular controls: loop video, mute, picture-in-picture and an extra-actions menu, alongside play/pause, skip, progress, speed, quality and fullscreen.</string>
+    <string name="changelog_125_improved_overlay">A new dark player overlay with a progress bar and timestamps, subtle fades and a configurable auto-hide delay.</string>
+    <string name="changelog_125_improved_speed_quality">Speed presets, a default playback speed, and the active speed and quality now show right in the player.</string>
 </resources>
