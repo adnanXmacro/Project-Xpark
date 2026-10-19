@@ -137,6 +137,7 @@ class PlayerControlsOverlay(
 
         val visibleIds = PlayerControlRegistry.sanitizeVisible(AppPrefs.playerControls)
         binding.controlsRow.removeAllViews()
+        binding.rightCluster.removeAllViews()
 
         var hasProgress = false
         visibleIds.forEach { id ->
@@ -150,13 +151,30 @@ class PlayerControlsOverlay(
                 hasProgress = true
                 return@forEach
             }
+            // Speed and fullscreen are pinned on the right, YouTube-style;
+            // they are added after the left-hand row so order stays Speed then Fullscreen.
+            if (id == PlayerControlRegistry.SPEED || id == PlayerControlRegistry.FULLSCREEN) {
+                return@forEach
+            }
             binding.controlsRow.addView(controlView(control, state))
+        }
+        if (PlayerControlRegistry.SPEED in visibleIds) {
+            PlayerControlRegistry.byId[PlayerControlRegistry.SPEED]
+                ?.takeIf { it.available(state) }
+                ?.let { binding.rightCluster.addView(controlView(it, state)) }
+        }
+        if (PlayerControlRegistry.FULLSCREEN in visibleIds) {
+            PlayerControlRegistry.byId[PlayerControlRegistry.FULLSCREEN]
+                ?.takeIf { it.available(state) }
+                ?.let { binding.rightCluster.addView(controlView(it, state)) }
         }
 
         progressEnabled = hasProgress
-        val hasControls = binding.controlsRow.childCount > 0
-        binding.controlsRow.isVisible = hasControls
-        binding.controlsScroll.isVisible = hasControls
+        val hasLeft = binding.controlsRow.childCount > 0
+        val hasRight = binding.rightCluster.childCount > 0
+        binding.controlsRow.isVisible = hasLeft
+        binding.controlsScroll.isVisible = hasLeft
+        binding.rightCluster.isVisible = hasRight
         binding.progressRow.isVisible = hasProgress && state.durationMs > 0
         val playControl = PlayerControlRegistry.byId[PlayerControlRegistry.PLAY_PAUSE]
         playControlEnabled = visibleIds.contains(PlayerControlRegistry.PLAY_PAUSE) &&

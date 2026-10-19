@@ -16,7 +16,6 @@ import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.sparktube.app.BuildConfig
 import com.sparktube.app.R
-import com.sparktube.app.data.Countries
 import com.sparktube.app.data.RecommendEngine
 import com.sparktube.app.data.YtRepository
 import com.sparktube.app.databinding.FragmentHomeBinding
@@ -116,8 +115,6 @@ class HomeFragment : Fragment() {
     override fun onResume() {
         super.onResume()
         applyHomeBrand()
-        // Flag follows the selected country at all times.
-        binding.countryFlag.text = Countries.flagOf(AppPrefs.countryOrDefault)
         maybeReload()
     }
 
@@ -140,7 +137,6 @@ class HomeFragment : Fragment() {
     override fun onHiddenChanged(hidden: Boolean) {
         super.onHiddenChanged(hidden)
         if (!hidden) {
-            binding.countryFlag.text = Countries.flagOf(AppPrefs.countryOrDefault)
             maybeReload()
         }
     }

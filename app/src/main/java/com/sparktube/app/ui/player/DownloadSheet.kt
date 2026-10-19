@@ -4,10 +4,14 @@ import android.content.Context
 import android.graphics.Typeface
 import android.graphics.drawable.GradientDrawable
 import android.util.TypedValue
+import android.view.Gravity
+import android.view.View
 import android.view.ViewGroup
+import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.TextView
 import android.widget.Toast
+import androidx.core.view.isVisible
 import com.google.android.material.bottomsheet.BottomSheetDialog
 import com.sparktube.app.R
 import com.sparktube.app.download.DownloadCenter
@@ -16,12 +20,13 @@ import com.sparktube.app.playback.QueueEntry
 import com.sparktube.app.playback.StreamCatalog
 import com.sparktube.app.playback.effectiveHeight
 import com.sparktube.app.util.Themes
+import org.schabi.newpipe.extractor.stream.VideoStream
 
 /**
- * Download picker: Audio only / Video only / Video + Audio, each with a
- * quality list. On the music player only the audio section is shown.
- * Options that were already downloaded appear marked and can't be started
- * again.
+ * Download picker with three collapsible groups, video first:
+ * Download video (video + audio), Download video only, Download audio only.
+ * Music playback only shows the audio group. Already-downloaded options are
+ * marked and cannot be started again.
  */
 class DownloadSheet(
     context: Context,
@@ -63,132 +68,45 @@ class DownloadSheet(
         root.addView(songTitle)
 
         val musicOnly = audioOnly || !catalog.hasVideo
-
-        // ----- Audio only -----
         val audioTrack = catalog.audioTracks.firstOrNull()
-        if (audioTrack != null) {
-            root.addView(sectionTitle(context.getString(R.string.download_audio_section)))
-            audioTrack.streams
-                .filter { it.isUrl }
-                .sortedByDescending { it.averageBitrate }
-                .forEach { stream ->
-                    // NPE reports the audio average bitrate directly in kbps.
-                    val kbps = if (stream.averageBitrate > 0) {
-                        "${stream.averageBitrate} kbps"
-                    } else {
-                        "Audio"
-                    }
-                    val alreadyDone = downloaded(DownloadCenter.TYPE_AUDIO, kbps)
-                    root.addView(
-                        optionRow(
-                            if (alreadyDone) "$kbps • ${context.getString(R.string.download_option_done)}" else kbps + suffix(audioTrack),
-                            alreadyDone
-                        ) {
-                            if (alreadyDone) {
-                                Toast.makeText(
-                                    context, R.string.already_downloaded, Toast.LENGTH_SHORT
-                                ).show()
-                            } else {
-                                DownloadCenter.startSingle(
-                                    context,
-                                    entry.url,
-                                    entry.title,
-                                    entry.uploader,
-                                    entry.thumbnailUrl,
-                                    DownloadCenter.TYPE_AUDIO,
-                                    kbps,
-                                    stream.content,
-                                    "m4a"
-                                )
-                                toastStarted()
-                            }
-                            dismiss()
-                        }
-                    )
-                }
-        }
 
         if (!musicOnly) {
-            // ----- Video only -----
-            root.addView(sectionTitle(context.getString(R.string.download_video_section)))
-            val videoChoices = if (catalog.videoOnly.isNotEmpty()) {
-                catalog.videoOnly
-            } else {
-                // No adaptive streams: fall back to the muxed list.
-                catalog.muxed
-            }
-            videoChoices.forEach { v ->
-                val label = if (v.isVideoOnly) {
-                    "${v.effectiveHeight()}p (video only, no sound)"
-                } else {
-                    "${v.effectiveHeight()}p (muxed, video + sound)"
-                }
-                val quality = "${v.effectiveHeight()}p"
-                val alreadyDone = downloaded(DownloadCenter.TYPE_VIDEO, quality)
+            val avBody = LinearLayout(context).apply { orientation = LinearLayout.VERTICAL }
+            fillAvOptions(avBody, audioTrack)
+            if (avBody.childCount > 0) {
                 root.addView(
-                    optionRow(
-                        if (alreadyDone) "$label • ${context.getString(R.string.download_option_done)}" else label,
-                        alreadyDone
-                    ) {
-                        if (alreadyDone) {
-                            Toast.makeText(context, R.string.already_downloaded, Toast.LENGTH_SHORT).show()
-                        } else {
-                            DownloadCenter.startSingle(
-                                context,
-                                entry.url,
-                                entry.title,
-                                entry.uploader,
-                                entry.thumbnailUrl,
-                                DownloadCenter.TYPE_VIDEO,
-                                quality,
-                                v.content,
-                                "mp4"
-                            )
-                            toastStarted()
-                        }
-                        dismiss()
-                    }
+                    collapsibleGroup(
+                        context.getString(R.string.download_video_dropdown),
+                        avBody,
+                        expanded = true
+                    )
                 )
             }
 
-            // ----- Video + Audio -----
-            if (catalog.videoOnly.isNotEmpty() && audioTrack?.best != null) {
-                root.addView(sectionTitle(context.getString(R.string.download_av_section)))
-                val note = TextView(context).apply {
-                    text = context.getString(R.string.download_pair_note)
-                    textSize = 12f
-                    maxLines = 2
-                    setTextColor(context.getColor(R.color.on_surface_variant))
-                    layoutParams = marginParams()
-                }
-                root.addView(note)
-                catalog.videoOnly.forEach { v ->
-                    val quality = "${v.effectiveHeight()}p"
-                    val alreadyDone = downloaded(DownloadCenter.TYPE_AV, quality)
-                    root.addView(
-                        optionRow(
-                            if (alreadyDone) "$quality • ${context.getString(R.string.download_option_done)}" else quality,
-                            alreadyDone
-                        ) {
-                            if (alreadyDone) {
-                                Toast.makeText(context, R.string.already_downloaded, Toast.LENGTH_SHORT).show()
-                            } else {
-                                DownloadCenter.startPair(
-                                    context,
-                                    entry.url,
-                                    entry.title,
-                                    entry.uploader,
-                                    entry.thumbnailUrl,
-                                    quality,
-                                    v.content,
-                                    audioTrack.best!!.content
-                                )
-                                toastStarted()
-                            }
-                            dismiss()
-                        }
+            val videoBody = LinearLayout(context).apply { orientation = LinearLayout.VERTICAL }
+            fillVideoOnlyOptions(videoBody)
+            if (videoBody.childCount > 0) {
+                root.addView(
+                    collapsibleGroup(
+                        context.getString(R.string.download_video_only_dropdown),
+                        videoBody,
+                        expanded = false
                     )
-                }
+                )
+            }
+        }
+
+        if (audioTrack != null) {
+            val audioBody = LinearLayout(context).apply { orientation = LinearLayout.VERTICAL }
+            fillAudioOptions(audioBody, audioTrack)
+            if (audioBody.childCount > 0) {
+                root.addView(
+                    collapsibleGroup(
+                        context.getString(R.string.download_audio_dropdown),
+                        audioBody,
+                        expanded = musicOnly
+                    )
+                )
             }
         }
 
@@ -197,23 +115,174 @@ class DownloadSheet(
         super.show()
     }
 
-    private fun sectionTitle(label: String): TextView =
-        TextView(context).apply {
-            text = label
-            textSize = 14f
-            setTextColor(context.getColor(R.color.on_surface))
-            setTypeface(null, Typeface.BOLD)
-            layoutParams = marginParams(top = 18)
+    /** Video + audio pair (or muxed fallback when there are no adaptive streams). */
+    private fun fillAvOptions(body: LinearLayout, audioTrack: AudioTrackGroup?) {
+        if (catalog.videoOnly.isNotEmpty() && audioTrack?.best != null) {
+            body.addView(
+                TextView(context).apply {
+                    text = context.getString(R.string.download_pair_note)
+                    textSize = 12f
+                    maxLines = 2
+                    setTextColor(context.getColor(R.color.on_surface_variant))
+                    layoutParams = marginParams(top = 4)
+                }
+            )
+            catalog.videoOnly.forEach { v ->
+                val quality = "${v.effectiveHeight()}p"
+                val alreadyDone = downloaded(DownloadCenter.TYPE_AV, quality)
+                body.addView(qualityRow(quality, alreadyDone) {
+                    startAv(v, audioTrack, quality)
+                })
+            }
+            return
         }
+        catalog.muxed.forEach { v ->
+            val quality = "${v.effectiveHeight()}p"
+            val alreadyDone = downloaded(DownloadCenter.TYPE_VIDEO, quality)
+            body.addView(qualityRow("$quality (muxed)", alreadyDone) {
+                startVideo(v, quality)
+            })
+        }
+    }
 
-    private fun marginParams(top: Int = 0): LinearLayout.LayoutParams =
-        LinearLayout.LayoutParams(
-            ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT
-        ).also { it.topMargin = dp(top) }
+    private fun fillVideoOnlyOptions(body: LinearLayout) {
+        catalog.videoOnly.forEach { v ->
+            val quality = "${v.effectiveHeight()}p"
+            val alreadyDone = downloaded(DownloadCenter.TYPE_VIDEO, quality)
+            body.addView(qualityRow("$quality (no sound)", alreadyDone) {
+                startVideo(v, quality)
+            })
+        }
+    }
 
-    private fun optionRow(label: String, done: Boolean = false, onClick: () -> Unit): TextView =
+    private fun fillAudioOptions(body: LinearLayout, audioTrack: AudioTrackGroup) {
+        audioTrack.streams
+            .filter { it.isUrl }
+            .sortedByDescending { it.averageBitrate }
+            .forEach { stream ->
+                val kbps = if (stream.averageBitrate > 0) {
+                    "${stream.averageBitrate} kbps"
+                } else {
+                    "Audio"
+                }
+                val alreadyDone = downloaded(DownloadCenter.TYPE_AUDIO, kbps)
+                body.addView(qualityRow(kbps + suffix(audioTrack), alreadyDone) {
+                    if (alreadyDone) {
+                        Toast.makeText(context, R.string.already_downloaded, Toast.LENGTH_SHORT).show()
+                    } else {
+                        DownloadCenter.startSingle(
+                            context,
+                            entry.url,
+                            entry.title,
+                            entry.uploader,
+                            entry.thumbnailUrl,
+                            DownloadCenter.TYPE_AUDIO,
+                            kbps,
+                            stream.content,
+                            "m4a"
+                        )
+                        toastStarted()
+                    }
+                    dismiss()
+                })
+            }
+    }
+
+    private fun startAv(v: VideoStream, audioTrack: AudioTrackGroup, quality: String) {
+        if (downloaded(DownloadCenter.TYPE_AV, quality)) {
+            Toast.makeText(context, R.string.already_downloaded, Toast.LENGTH_SHORT).show()
+        } else {
+            DownloadCenter.startPair(
+                context,
+                entry.url,
+                entry.title,
+                entry.uploader,
+                entry.thumbnailUrl,
+                quality,
+                v.content,
+                audioTrack.best!!.content
+            )
+            toastStarted()
+        }
+        dismiss()
+    }
+
+    private fun startVideo(v: VideoStream, quality: String) {
+        if (downloaded(DownloadCenter.TYPE_VIDEO, quality)) {
+            Toast.makeText(context, R.string.already_downloaded, Toast.LENGTH_SHORT).show()
+        } else {
+            DownloadCenter.startSingle(
+                context,
+                entry.url,
+                entry.title,
+                entry.uploader,
+                entry.thumbnailUrl,
+                DownloadCenter.TYPE_VIDEO,
+                quality,
+                v.content,
+                "mp4"
+            )
+            toastStarted()
+        }
+        dismiss()
+    }
+
+    /**
+     * A tappable header that expands / collapses [body]. [expanded] is the
+     * starting state (video group starts open, the others start closed).
+     */
+    private fun collapsibleGroup(
+        title: String,
+        body: LinearLayout,
+        expanded: Boolean
+    ): LinearLayout {
+        body.isVisible = expanded
+        val chevron = ImageView(context).apply {
+            setImageResource(R.drawable.ic_chevron_up)
+            setColorFilter(context.getColor(R.color.on_surface_variant))
+            rotation = if (expanded) 180f else 0f
+            layoutParams = LinearLayout.LayoutParams(dp(22), dp(22))
+            importantForAccessibility = View.IMPORTANT_FOR_ACCESSIBILITY_NO
+        }
+        val header = LinearLayout(context).apply {
+            orientation = LinearLayout.HORIZONTAL
+            gravity = Gravity.CENTER_VERTICAL
+            setPadding(dp(14), dp(14), dp(14), dp(14))
+            isClickable = true
+            isFocusable = true
+            background = GradientDrawable().apply {
+                cornerRadius = dp(12).toFloat()
+                setColor(Themes.elevatedColor(context))
+            }
+            layoutParams = marginParams(top = 12)
+            addView(
+                TextView(context).apply {
+                    text = title
+                    textSize = 15f
+                    setTypeface(null, Typeface.BOLD)
+                    setTextColor(context.getColor(R.color.on_surface))
+                    layoutParams = LinearLayout.LayoutParams(
+                        0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f
+                    )
+                }
+            )
+            addView(chevron)
+            setOnClickListener {
+                val open = !body.isVisible
+                body.isVisible = open
+                chevron.animate().rotation(if (open) 180f else 0f).setDuration(160).start()
+            }
+        }
+        return LinearLayout(context).apply {
+            orientation = LinearLayout.VERTICAL
+            addView(header)
+            addView(body)
+        }
+    }
+
+    private fun qualityRow(label: String, done: Boolean, onClick: () -> Unit): TextView =
         TextView(context).apply {
-            text = label
+            text = if (done) "$label • ${context.getString(R.string.download_option_done)}" else label
             textSize = 15f
             setPadding(dp(14), dp(12), dp(14), dp(12))
             setTextColor(
@@ -227,6 +296,11 @@ class DownloadSheet(
             layoutParams = marginParams(top = 8)
             setOnClickListener { onClick() }
         }
+
+    private fun marginParams(top: Int = 0): LinearLayout.LayoutParams =
+        LinearLayout.LayoutParams(
+            ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT
+        ).also { it.topMargin = dp(top) }
 
     private fun suffix(track: AudioTrackGroup): String {
         return if (track.label.isNotBlank() && track.label != "Default") {

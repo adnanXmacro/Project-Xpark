@@ -103,19 +103,35 @@
                 android:textSize="12sp"
                 android:text="0:00" />
         </LinearLayout>
-        <HorizontalScrollView
-            android:id="@+id/controlsScroll"
+        <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:scrollbars="none">
+            android:gravity="center_vertical"
+            android:orientation="horizontal"
+            android:paddingTop="2dp">
 
+            <HorizontalScrollView
+                android:id="@+id/controlsScroll"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:scrollbars="none">
+
+                <LinearLayout
+                    android:id="@+id/controlsRow"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal" />
+            </HorizontalScrollView>
+
+            <!-- YouTube-style right cluster: speed then fullscreen. -->
             <LinearLayout
-                android:id="@+id/controlsRow"
+                android:id="@+id/rightCluster"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:gravity="center_vertical"
-                android:orientation="horizontal"
-                android:paddingTop="2dp" />
-        </HorizontalScrollView>
+                android:gravity="center_vertical|end"
+                android:orientation="horizontal" />
+        </LinearLayout>
     </LinearLayout>
 </FrameLayout>

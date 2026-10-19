@@ -199,7 +199,7 @@
         android:layout_height="44dp"
         android:background="@drawable/bg_icon_scrim"
         android:contentDescription="@string/action_scale_mode"
-        android:src="@drawable/ic_tune"
+        android:src="@drawable/ic_crop"
         app:layout_constraintEnd_toStartOf="@id/fullscreenButton"
         app:layout_constraintTop_toTopOf="parent"
         app:tint="@color/white" />
