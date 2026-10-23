@@ -17,8 +17,7 @@ object AppPrefs {
     private const val KEY_MUSIC_LOOP_COUNT = "music_loop_count"
     private const val KEY_MUSIC_LOOP_MINUTES = "music_loop_minutes"
     private const val KEY_ANIMATIONS = "animations"
-    private const val KEY_OPEN_YOUTUBE_LINKS = "open_youtube_links"
-    private const val KEY_OPEN_YOUTUBE_LINKS_HINT = "open_youtube_links_hint_shown"
+    private const val KEY_OPEN_YOUTUBE_LINKS_HINT = "open_youtube_links_hint_shown_v128"
 
     // Default video quality: separate values for Wi-Fi and mobile data.
     private const val KEY_DEFAULT_VIDEO_HEIGHT_WIFI = "default_video_height_wifi"
@@ -201,16 +200,6 @@ object AppPrefs {
         get() = sp.getBoolean(KEY_ANIMATIONS, true)
         set(value) {
             sp.edit().putBoolean(KEY_ANIMATIONS, value).apply()
-        }
-
-    /**
-     * When true, Open Tube appears as a handler for YouTube video links
-     * (tap a URL or Share). Off by default so other apps keep the links.
-     */
-    var openYoutubeLinks: Boolean
-        get() = sp.getBoolean(KEY_OPEN_YOUTUBE_LINKS, false)
-        set(value) {
-            sp.edit().putBoolean(KEY_OPEN_YOUTUBE_LINKS, value).apply()
         }
 
     /** One-shot "this update adds Open YouTube links" tip. */

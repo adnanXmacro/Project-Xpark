@@ -49,11 +49,10 @@
             android:configChanges="orientation|screenSize|keyboardHidden|screenLayout|smallestScreenSize|uiMode"
             android:supportsPictureInPicture="true" />
 
-        <!-- Disabled until Menu → Video settings → Open YouTube links is on. -->
+        <!-- Always registered. Android's Open by default page decides if we get the tap. -->
         <activity
             android:name=".ui.player.YoutubeLinkActivity"
             android:exported="true"
-            android:enabled="false"
             android:excludeFromRecents="true"
             android:noHistory="true"
             android:theme="@style/Theme.SparkTube.Translucent">

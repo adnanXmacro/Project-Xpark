@@ -21,7 +21,6 @@ import com.sparktube.app.R
 import com.sparktube.app.data.Countries
 import com.sparktube.app.data.YtRepository
 import com.sparktube.app.databinding.FragmentMenuBinding
-import com.sparktube.app.ui.player.YoutubeLinkActivity
 import com.sparktube.app.ui.update.UpdatePrompt
 import com.sparktube.app.util.AppPrefs
 import com.sparktube.app.util.BackupManager
@@ -218,7 +217,6 @@ class MenuFragment : Fragment() {
             // The stored theme may have changed: re-apply the night mode and
             // refresh this screen right away when the visual prefs moved.
             Themes.applyDefaultNightMode()
-            YoutubeLinkActivity.syncEnabled(ctx)
             act?.let { Themes.recreateIfNeeded(it) }
             Toast.makeText(
                 ctx,

@@ -5,7 +5,6 @@ import coil.ImageLoader
 import coil.ImageLoaderFactory
 import com.sparktube.app.net.OkHttpDownloader
 import com.sparktube.app.playback.PlaybackCenter
-import com.sparktube.app.ui.player.YoutubeLinkActivity
 import com.sparktube.app.update.UpdateInstaller
 import com.sparktube.app.util.AppPrefs
 import com.sparktube.app.util.CrashReporter
@@ -31,7 +30,6 @@ class SparkTubeApp : Application(), ImageLoaderFactory {
         UpdateInstaller.init(this)
 
         AppPrefs.init(this)
-        YoutubeLinkActivity.syncEnabled(this)
         PlaybackCenter.init(this)
         Themes.applyDefaultNightMode()
 
