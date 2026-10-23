@@ -421,6 +421,7 @@
     <string name="changelog_125_added_catalog">New modular controls: loop video, mute, picture-in-picture and an extra-actions menu, alongside play/pause, skip, progress, speed, quality and fullscreen.</string>
     <string name="changelog_125_improved_overlay">A new dark player overlay with a progress bar and timestamps, subtle fades and a configurable auto-hide delay.</string>
     <string name="changelog_125_improved_speed_quality">Speed presets, a default playback speed, and the active speed and quality now show right in the player.</string>
+    <string name="changelog_127_added_open_links">Open YouTube links: turn it on in Video settings to play a video when you tap or share a YouTube URL. It stays off until you opt in.</string>
     <string name="changelog_126_fixed_crop">The fullscreen crop button now uses a real crop icon instead of a settings slider.</string>
     <string name="changelog_126_improved_controls">Speed and fullscreen sit on the bottom-right of the player, YouTube-style; the other controls stay on the left.</string>
     <string name="changelog_126_improved_home">The home header is cleaner: app icon plus Open Tube, without the country flag.</string>
