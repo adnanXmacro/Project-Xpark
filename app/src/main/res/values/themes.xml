@@ -104,6 +104,17 @@
         <item name="tabIndicatorColor">#26C6DA</item>
     </style>
 
+    <style name="Theme.SparkTube.Translucent" parent="Theme.Material3.DayNight.NoActionBar">
+        <item name="android:windowBackground">@android:color/transparent</item>
+        <item name="android:windowIsTranslucent">true</item>
+        <item name="android:windowNoTitle">true</item>
+        <item name="android:windowContentOverlay">@null</item>
+        <item name="android:colorBackgroundCacheHint">@null</item>
+        <item name="android:windowAnimationStyle">@null</item>
+        <item name="android:statusBarColor">@android:color/transparent</item>
+        <item name="android:navigationBarColor">@android:color/transparent</item>
+    </style>
+
     <style name="RoundedThumb" parent="">
         <item name="cornerFamily">rounded</item>
         <item name="cornerSize">12dp</item>

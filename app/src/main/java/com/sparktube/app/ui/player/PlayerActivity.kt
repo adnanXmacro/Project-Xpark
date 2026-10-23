@@ -331,25 +331,40 @@ class PlayerActivity : AppCompatActivity() {
 
         applyOrientation(resources.configuration)
 
+        if (!playFromIntent(intent, finishIfEmpty = true)) return
+    }
+
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        setIntent(intent)
+        playFromIntent(intent, finishIfEmpty = false)
+    }
+
+    /**
+     * Starts or resumes playback from extras on [intent].
+     * @return false when this activity should not continue (already finished).
+     */
+    private fun playFromIntent(intent: Intent, finishIfEmpty: Boolean): Boolean {
         if (intent.getBooleanExtra(EXTRA_ATTACH, false) && PlaybackCenter.hasMedia) {
             loadedUrl = PlaybackCenter.currentEntry?.url
             PlaybackCenter.currentEntry?.let(::bind)
             bindCatalog()
-        } else {
-            val entry = entryFromIntent()
-            if (entry == null) {
-                finish()
-                return
-            }
-            if (PlaybackCenter.currentEntry?.url == entry.url && PlaybackCenter.mode == PlaybackCenter.Mode.VIDEO) {
-                PlaybackCenter.switchBackToVideo()
-                loadedUrl = entry.url
-                bind(entry)
-                bindCatalog()
-            } else {
-                PlaybackCenter.playVideo(entry)
-            }
+            return true
         }
+        val entry = entryFromIntent()
+        if (entry == null) {
+            if (finishIfEmpty) finish()
+            return !finishIfEmpty
+        }
+        if (PlaybackCenter.currentEntry?.url == entry.url && PlaybackCenter.mode == PlaybackCenter.Mode.VIDEO) {
+            PlaybackCenter.switchBackToVideo()
+            loadedUrl = entry.url
+            bind(entry)
+            bindCatalog()
+        } else {
+            PlaybackCenter.playVideo(entry)
+        }
+        return true
     }
 
     /**
@@ -1704,6 +1719,19 @@ class PlayerActivity : AppCompatActivity() {
                 putExtra(EXTRA_UPLOADER, model.uploader)
                 putExtra(EXTRA_THUMB, model.thumbnailUrl)
                 putExtra(EXTRA_DURATION, model.durationSec)
+            }
+            context.startActivity(intent)
+        }
+
+        /** Opens a YouTube video URL (external tap / share). Title fills in after resolve. */
+        fun startFromUrl(context: Context, url: String) {
+            val intent = Intent(context, PlayerActivity::class.java).apply {
+                putExtra(EXTRA_URL, url)
+                addFlags(
+                    Intent.FLAG_ACTIVITY_NEW_TASK or
+                        Intent.FLAG_ACTIVITY_CLEAR_TOP or
+                        Intent.FLAG_ACTIVITY_SINGLE_TOP
+                )
             }
             context.startActivity(intent)
         }

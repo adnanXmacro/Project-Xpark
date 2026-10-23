@@ -26,6 +26,7 @@ import com.sparktube.app.ui.music.NowPlayingActivity
 import com.sparktube.app.ui.player.PlayerActivity
 import com.sparktube.app.update.UpdateInstaller
 import com.sparktube.app.util.AppPrefs
+import com.sparktube.app.util.OpenLinksHint
 import com.sparktube.app.util.Themes
 import com.sparktube.app.util.UpdateChecker
 import com.sparktube.app.util.Thumbs
@@ -73,6 +74,7 @@ class MainActivity : AppCompatActivity() {
         requestNotificationPermissionIfNeeded()
         silentlyCheckForUpdate()
         handleInstallIntent(intent)
+        if (savedInstanceState == null) OpenLinksHint.maybeShow(this)
 
         binding.floatingNav.onTabSelected = { id -> select(id, fromNav = true) }
 
@@ -175,7 +177,12 @@ class MainActivity : AppCompatActivity() {
         grantResults: IntArray
     ) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
-        // Notification permission is optional: playback works either way.
+        if (requestCode == REQ_NOTIFICATIONS &&
+            grantResults.isNotEmpty() &&
+            grantResults[0] == PackageManager.PERMISSION_GRANTED
+        ) {
+            OpenLinksHint.retryNotification(this)
+        }
     }
 
     private fun bindMiniPlayer() {

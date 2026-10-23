@@ -22,6 +22,7 @@ import com.sparktube.app.databinding.ActivitySettingsPageBinding
 import com.sparktube.app.download.DownloadCenter
 import com.sparktube.app.playback.PlaybackCenter
 import com.sparktube.app.ui.music.MusicLoopUi
+import com.sparktube.app.ui.player.YoutubeLinkActivity
 import com.sparktube.app.util.AppPrefs
 import com.sparktube.app.util.CrashReporter
 import com.sparktube.app.util.Themes
@@ -439,6 +440,25 @@ class SettingsPageActivity : AppCompatActivity() {
             }
         )
         content.addView(
+            menuRow(
+                getString(R.string.settings_open_youtube_links),
+                if (AppPrefs.openYoutubeLinks) getString(R.string.on) else getString(R.string.off)
+            ) {
+                AppPrefs.openYoutubeLinks = !AppPrefs.openYoutubeLinks
+                YoutubeLinkActivity.syncEnabled(this)
+                render()
+                Toast.makeText(
+                    this,
+                    if (AppPrefs.openYoutubeLinks) {
+                        R.string.settings_open_youtube_links_on
+                    } else {
+                        R.string.settings_open_youtube_links_off
+                    },
+                    Toast.LENGTH_SHORT
+                ).show()
+            }
+        )
+        content.addView(
             menuRow(getString(R.string.player_controls_title), playerControlsSummary()) {
                 startActivity(
                     Intent(this, com.sparktube.app.player.PlayerControlsActivity::class.java)
@@ -653,7 +673,7 @@ class SettingsPageActivity : AppCompatActivity() {
         const val TYPE_GENERAL = 0
         const val TYPE_VIDEO = 1
         const val TYPE_MUSIC = 2
-        private const val EXTRA_TYPE = "extra_type"
+        const val EXTRA_TYPE = "extra_type"
 
         fun start(context: Context, type: Int) {
             val intent = Intent(context, SettingsPageActivity::class.java).apply {
