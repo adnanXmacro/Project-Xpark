@@ -371,6 +371,10 @@ class SettingsPageActivity : AppCompatActivity() {
             R.string.favorites_cleared
         ) { LocalStore.clearFavorites(it) }
         clearRow(
+            R.string.clear_favorite_artists, R.string.clear_favorite_artists,
+            R.string.clear_favorite_artists_confirm, R.string.favorite_artists_cleared
+        ) { LocalStore.clearFavoriteArtists(it) }
+        clearRow(
             R.string.clear_subscriptions, R.string.clear_subscriptions,
             R.string.clear_subscriptions_confirm, R.string.subscriptions_cleared
         ) { LocalStore.clearSubscriptions(it) }

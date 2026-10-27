@@ -16,6 +16,7 @@ import androidx.core.content.ContextCompat
 import androidx.core.view.isVisible
 import coil.load
 import com.sparktube.app.R
+import com.sparktube.app.data.ArtistEntry
 import com.sparktube.app.data.LocalStore
 import com.sparktube.app.databinding.ActivityNowPlayingBinding
 import com.sparktube.app.download.DownloadCenter
@@ -93,6 +94,11 @@ class NowPlayingActivity : AppCompatActivity() {
                 if (nowFav) R.string.added_to_favorites else R.string.removed_from_favorites,
                 Toast.LENGTH_SHORT
             ).show()
+        }
+        binding.subtitle.setOnClickListener { openCurrentArtist() }
+        binding.subtitle.setOnLongClickListener {
+            starCurrentArtist()
+            true
         }
         binding.radioButton.setOnClickListener { restartRadio() }
         binding.downloadButton.setOnClickListener { onDownloadClicked() }
@@ -321,6 +327,33 @@ class NowPlayingActivity : AppCompatActivity() {
     ) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
         // Optional: playback works either way.
+    }
+
+    private fun currentArtist(): ArtistEntry? {
+        val entry = PlaybackCenter.currentEntry ?: return null
+        val name = entry.uploader.trim()
+        if (name.isEmpty()) return null
+        val catalog = PlaybackCenter.catalog
+        return ArtistEntry(
+            name = name,
+            avatarUrl = catalog?.uploaderAvatarUrl?.ifBlank { entry.thumbnailUrl } ?: entry.thumbnailUrl,
+            channelUrl = catalog?.uploaderUrl.orEmpty()
+        )
+    }
+
+    private fun openCurrentArtist() {
+        val artist = currentArtist() ?: return
+        ArtistActivity.start(this, artist)
+    }
+
+    private fun starCurrentArtist() {
+        val artist = currentArtist() ?: return
+        val now = LocalStore.toggleFavoriteArtist(this, artist)
+        Toast.makeText(
+            this,
+            if (now) R.string.artist_added else R.string.artist_removed,
+            Toast.LENGTH_SHORT
+        ).show()
     }
 
     private fun restartRadio() {

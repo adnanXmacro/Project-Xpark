@@ -22,6 +22,7 @@ data class VideoUiModel(
 ) {
     val durationLabel: String get() = Formatters.formatDuration(durationSec)
     val viewsLabel: String get() = Formatters.formatViewsLabel(viewCount)
+    val playsLabel: String get() = Formatters.formatPlaysLabel(viewCount)
 }
 
 fun StreamInfoItem.toUiModel(): VideoUiModel = VideoUiModel(

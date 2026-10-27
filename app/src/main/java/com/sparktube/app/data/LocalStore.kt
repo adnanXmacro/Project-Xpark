@@ -21,6 +21,13 @@ data class ChannelEntry(
     val subscriberCount: Long
 )
 
+/** An artist the user starred from music (local, account-free). */
+data class ArtistEntry(
+    val name: String,
+    val avatarUrl: String,
+    val channelUrl: String = ""
+)
+
 /** A finished or in-progress download tracked by the app. */
 data class DownloadRecord(
     val videoId: String,
@@ -59,10 +66,12 @@ object LocalStore {
     private const val KEY_PLAYLISTS = "playlists_json"
     private const val KEY_SEARCHES = "searches_json"
     private const val KEY_MUSIC_SEARCHES = "music_searches_json"
+    private const val KEY_FAVORITE_ARTISTS = "favorite_artists_json"
     private const val MAX_HISTORY = 200
     private const val MAX_FAVORITES = 500
     private const val MAX_SUBSCRIPTIONS = 200
     private const val MAX_SEARCHES = 20
+    private const val MAX_ARTISTS = 100
     private const val MAX_PLAYLIST_VIDEOS = 500
 
     private fun prefs(context: Context) =
@@ -194,6 +203,61 @@ object LocalStore {
 
     fun clearSubscriptions(context: Context) {
         prefs(context).edit().remove(KEY_SUBSCRIPTIONS).apply()
+    }
+
+    // ----- Favorite artists -----
+
+    fun favoriteArtists(context: Context): List<ArtistEntry> =
+        readArtists(prefs(context))
+
+    fun isFavoriteArtist(context: Context, name: String): Boolean {
+        val key = name.trim().lowercase()
+        if (key.isEmpty()) return false
+        return favoriteArtists(context).any { it.name.equals(key, ignoreCase = true) }
+    }
+
+    /** @return the new starred state for the artist. */
+    fun toggleFavoriteArtist(context: Context, entry: ArtistEntry): Boolean {
+        val name = entry.name.trim()
+        if (name.isEmpty()) return false
+        val ctx = context.applicationContext
+        val list = favoriteArtists(ctx).toMutableList()
+        val exists = list.indexOfFirst { it.name.equals(name, ignoreCase = true) }
+        if (exists >= 0) {
+            list.removeAt(exists)
+            writeArtists(prefs(ctx), list)
+            return false
+        }
+        val merged = entry.copy(name = name)
+        list.add(0, merged)
+        while (list.size > MAX_ARTISTS) {
+            list.removeAt(list.size - 1)
+        }
+        writeArtists(prefs(ctx), list)
+        return true
+    }
+
+    fun clearFavoriteArtists(context: Context) {
+        prefs(context).edit().remove(KEY_FAVORITE_ARTISTS).apply()
+    }
+
+    /**
+     * Unique uploaders from music history and song favorites, newest first.
+     * Used when the user wants to star someone they already listened to.
+     */
+    fun inferredArtists(context: Context): List<ArtistEntry> {
+        val starred = favoriteArtists(context)
+            .map { it.name.lowercase() }
+            .toHashSet()
+        val byName = LinkedHashMap<String, ArtistEntry>()
+        (musicHistory(context) + musicFavorites(context)).forEach { song ->
+            val name = song.uploader.trim()
+            if (name.isEmpty()) return@forEach
+            val key = name.lowercase()
+            if (key in starred || key in byName) return@forEach
+            byName[key] = ArtistEntry(name = name, avatarUrl = song.thumbnailUrl)
+        }
+        return byName.values.toList()
     }
 
     fun clearSearchesOnly(context: Context) {
@@ -408,6 +472,38 @@ object LocalStore {
             )
         }
         sp.edit().putString(key, arr.toString()).apply()
+    }
+
+    private fun readArtists(sp: android.content.SharedPreferences): List<ArtistEntry> {
+        val raw = sp.getString(KEY_FAVORITE_ARTISTS, null) ?: return emptyList()
+        return try {
+            val arr = JSONArray(raw)
+            (0 until arr.length()).mapNotNull { idx ->
+                val o = arr.getJSONObject(idx)
+                val name = o.optString("name").trim()
+                if (name.isEmpty()) return@mapNotNull null
+                ArtistEntry(
+                    name = name,
+                    avatarUrl = o.optString("avatar"),
+                    channelUrl = o.optString("channel")
+                )
+            }
+        } catch (e: Exception) {
+            emptyList()
+        }
+    }
+
+    private fun writeArtists(sp: android.content.SharedPreferences, list: List<ArtistEntry>) {
+        val arr = JSONArray()
+        list.forEach { entry ->
+            arr.put(
+                JSONObject()
+                    .put("name", entry.name)
+                    .put("avatar", entry.avatarUrl)
+                    .put("channel", entry.channelUrl)
+            )
+        }
+        sp.edit().putString(KEY_FAVORITE_ARTISTS, arr.toString()).apply()
     }
 
     private fun readSearches(sp: android.content.SharedPreferences, key: String): List<String> {

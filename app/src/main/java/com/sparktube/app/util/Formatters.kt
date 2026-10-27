@@ -92,6 +92,11 @@ object Formatters {
         return if (views.isEmpty()) "" else "$views views"
     }
 
+    fun formatPlaysLabel(count: Long): String {
+        val plays = formatViewCount(count)
+        return if (plays.isEmpty()) "" else "$plays plays"
+    }
+
     fun friendlyException(e: Throwable): String {
         return when {
             e is org.schabi.newpipe.extractor.exceptions.SignInConfirmNotBotException ->

@@ -30,7 +30,8 @@ object BackupManager {
         "favorites_json",
         "subscriptions_json",
         "searches_json",
-        "music_searches_json"
+        "music_searches_json",
+        "favorite_artists_json"
     )
 
     suspend fun exportTo(context: Context, uri: Uri): Boolean = withContext(Dispatchers.IO) {
@@ -88,6 +89,7 @@ object BackupManager {
             mergeChannels(localSp, root.optJSONObject("local")?.optString("subscriptions_json"))
             mergeSearches(localSp, "searches_json", root.optJSONObject("local")?.optString("searches_json"))
             mergeSearches(localSp, "music_searches_json", root.optJSONObject("local")?.optString("music_searches_json"))
+            mergeChannelsInto(localSp, "favorite_artists_json", root.optJSONObject("local")?.optString("favorite_artists_json"))
 
             // ---- recommendation play log: merge by url, keep the larger count ----
             root.optJSONObject("reco")?.optString("plays_json")?.takeIf { it.isNotBlank() }?.let { raw ->
@@ -161,22 +163,31 @@ object BackupManager {
     }
 
     private fun mergeChannels(sp: android.content.SharedPreferences, importedRaw: String?) {
+        mergeChannelsInto(sp, "subscriptions_json", importedRaw)
+    }
+
+    private fun mergeChannelsInto(
+        sp: android.content.SharedPreferences,
+        key: String,
+        importedRaw: String?
+    ) {
         if (importedRaw.isNullOrBlank()) return
         val imported = runCatching { JSONArray(importedRaw) }.getOrNull() ?: return
         val current = runCatching {
-            JSONArray(sp.getString("subscriptions_json", "[]"))
+            JSONArray(sp.getString(key, "[]"))
         }.getOrNull() ?: JSONArray()
         val seen = HashSet<String>()
         val merged = JSONArray()
+        val idField = if (key == "favorite_artists_json") "name" else "url"
         for (i in 0 until current.length()) {
             val o = current.getJSONObject(i)
-            if (seen.add(o.optString("url"))) merged.put(o)
+            if (seen.add(o.optString(idField).lowercase())) merged.put(o)
         }
         for (i in 0 until imported.length()) {
             val o = imported.getJSONObject(i)
-            if (seen.add(o.optString("url"))) merged.put(o)
+            if (seen.add(o.optString(idField).lowercase())) merged.put(o)
         }
-        sp.edit().putString("subscriptions_json", merged.toString()).apply()
+        sp.edit().putString(key, merged.toString()).apply()
     }
 
     private fun mergeSearches(sp: android.content.SharedPreferences, key: String, importedRaw: String?) {
