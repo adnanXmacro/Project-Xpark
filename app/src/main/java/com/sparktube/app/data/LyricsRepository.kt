@@ -40,7 +40,7 @@ object LyricsRepository {
         val qTrack = URLEncoder.encode(track, "UTF-8")
         val qArtist = URLEncoder.encode(artistName, "UTF-8")
         val body = runCatching {
-            OkHttpDownloader.get("https://lrclib.net/api/search?track_name=$qTrack&artist_name=$qArtist")
+            OkHttpDownloader.getText("https://lrclib.net/api/search?track_name=$qTrack&artist_name=$qArtist")
         }.getOrNull() ?: return null
         val arr = runCatching { JSONArray(body) }.getOrNull() ?: return null
         if (arr.length() == 0) return null
@@ -81,7 +81,7 @@ object LyricsRepository {
         val raw = pick.content?.takeIf { it.isNotBlank() } ?: return null
         val body = if (pick.isUrl) {
             withContext(Dispatchers.IO) {
-                runCatching { OkHttpDownloader.get(raw) }.getOrNull()
+                runCatching { OkHttpDownloader.getText(raw) }.getOrNull()
             } ?: return null
         } else {
             raw

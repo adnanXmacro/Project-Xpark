@@ -67,7 +67,7 @@ object OkHttpDownloader : Downloader() {
     }
 
     @Throws(IOException::class)
-    fun get(url: String): String {
+    fun getText(url: String): String {
         val request = okhttp3.Request.Builder()
             .url(url)
             .addHeader("User-Agent", USER_AGENT)
