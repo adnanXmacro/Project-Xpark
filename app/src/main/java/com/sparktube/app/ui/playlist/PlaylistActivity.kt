@@ -7,6 +7,7 @@ import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.isVisible
+import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.sparktube.app.R
 import com.sparktube.app.data.LocalStore
@@ -46,6 +47,9 @@ class PlaylistActivity : AppCompatActivity() {
 
         adapter = VideoAdapter(
             onClick = { model -> playFrom(videos.indexOfFirst { it.url == model.url }) },
+            onMore = { anchor, model ->
+                com.sparktube.app.ui.common.VideoMenu.show(anchor, model, lifecycleScope)
+            },
             onLongClick = { model ->
                 confirmRemove(model)
                 true

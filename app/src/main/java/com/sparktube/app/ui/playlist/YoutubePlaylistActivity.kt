@@ -52,9 +52,14 @@ class YoutubePlaylistActivity : AppCompatActivity() {
 
         binding.title.text = playlistName
 
-        adapter = VideoAdapter(onClick = { model ->
-            playFrom(videos.indexOfFirst { it.url == model.url })
-        })
+        adapter = VideoAdapter(
+            onClick = { model ->
+                playFrom(videos.indexOfFirst { it.url == model.url })
+            },
+            onMore = { anchor, model ->
+                com.sparktube.app.ui.common.VideoMenu.show(anchor, model, lifecycleScope)
+            }
+        )
         binding.list.layoutManager = LinearLayoutManager(this)
         binding.list.adapter = adapter
 

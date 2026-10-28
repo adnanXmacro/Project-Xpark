@@ -239,6 +239,16 @@
                 app:tint="@color/on_surface" />
 
             <ImageButton
+                android:id="@+id/lyricsButton"
+                android:layout_width="0dp"
+                android:layout_height="46dp"
+                android:layout_weight="1"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:contentDescription="@string/cd_lyrics"
+                android:src="@drawable/ic_lyrics"
+                app:tint="@color/on_surface" />
+
+            <ImageButton
                 android:id="@+id/downloadButton"
                 android:layout_width="0dp"
                 android:layout_height="46dp"

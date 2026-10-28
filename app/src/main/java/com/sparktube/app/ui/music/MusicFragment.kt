@@ -204,6 +204,10 @@ class MusicFragment : Fragment() {
             row.findViewById<TextView>(R.id.subtitle).text = model.uploader
             row.findViewById<TextView>(R.id.duration).text = model.durationLabel
             row.setOnClickListener { playSong(model, radio = true) }
+            row.findViewById<ImageButton>(R.id.moreButton).apply {
+                visibility = View.VISIBLE
+                setOnClickListener { showSongMenu(it, model) }
+            }
             b.popularList.addView(row)
         }
     }

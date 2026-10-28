@@ -519,6 +519,23 @@ object PlaybackCenter {
     }
 
     /**
+     * Appends [entry] to the video queue without interrupting playback.
+     * Starts the video if nothing is playing in video mode.
+     * @return false when the video is already in the queue.
+     */
+    fun enqueueVideo(entry: QueueEntry): Boolean {
+        initFromApp()
+        if (mode == Mode.VIDEO && queueIndex >= 0 && queue.isNotEmpty()) {
+            if (queue.any { it.url == entry.url }) return false
+            queue.add(entry)
+            notify { it.onQueueChanged() }
+            return true
+        }
+        playVideo(entry)
+        return true
+    }
+
+    /**
      * Plays a fixed video playlist starting at [startIndex]. The whole list
      * is the queue (previous / next work across it) and every video that
      * finishes hands over to the next one; nothing else is mixed in.

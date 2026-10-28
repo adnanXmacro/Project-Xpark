@@ -101,6 +101,7 @@ class NowPlayingActivity : AppCompatActivity() {
             true
         }
         binding.radioButton.setOnClickListener { restartRadio() }
+        binding.lyricsButton.setOnClickListener { LyricsSheet(this).show() }
         binding.downloadButton.setOnClickListener { onDownloadClicked() }
         binding.loopButton.setOnClickListener {
             MusicLoopUi.showPicker(this) { bindLoopButton() }

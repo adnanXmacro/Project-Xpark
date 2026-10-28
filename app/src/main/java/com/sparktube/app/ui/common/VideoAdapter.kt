@@ -2,18 +2,16 @@ package com.sparktube.app.ui.common
 
 import android.view.LayoutInflater
 import android.view.ViewGroup
-import androidx.core.content.ContextCompat
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
-import coil.load
-import com.sparktube.app.R
 import com.sparktube.app.databinding.ItemVideoBinding
 import com.sparktube.app.util.Thumbs
 
 class VideoAdapter(
     private val onClick: (VideoUiModel) -> Unit,
-    private val onLongClick: ((VideoUiModel) -> Boolean)? = null
+    private val onLongClick: ((VideoUiModel) -> Boolean)? = null,
+    private val onMore: ((android.view.View, VideoUiModel) -> Unit)? = null
 ) : ListAdapter<VideoUiModel, VideoAdapter.VH>(DIFF) {
 
     companion object {
@@ -52,6 +50,12 @@ class VideoAdapter(
         b.root.setOnClickListener { onClick(item) }
         b.root.setOnLongClickListener {
             onLongClick?.invoke(item) ?: false
+        }
+        if (onMore != null) {
+            b.moreButton.visibility = android.view.View.VISIBLE
+            b.moreButton.setOnClickListener { view -> onMore.invoke(view, item) }
+        } else {
+            b.moreButton.visibility = android.view.View.GONE
         }
     }
 }

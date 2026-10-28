@@ -241,11 +241,15 @@ class PlayerActivity : AppCompatActivity() {
         binding.descToggle.setOnClickListener { toggleDescription() }
         binding.commentsCard.setOnClickListener { openComments() }
 
-        relatedAdapter = VideoAdapter(onClick = { model ->
-            // Play inside this page so swipe/mini flow keeps working.
-            val entry = model.toQueueEntry()
-            PlaybackCenter.playVideo(entry)
-        })
+        relatedAdapter = VideoAdapter(
+            onClick = { model ->
+                val entry = model.toQueueEntry()
+                PlaybackCenter.playVideo(entry)
+            },
+            onMore = { anchor, model ->
+                com.sparktube.app.ui.common.VideoMenu.show(anchor, model, lifecycleScope)
+            }
+        )
         binding.relatedList.layoutManager = LinearLayoutManager(this)
         binding.relatedList.adapter = relatedAdapter
 

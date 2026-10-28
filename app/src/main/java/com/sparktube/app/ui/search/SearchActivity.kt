@@ -103,17 +103,23 @@ class SearchActivity : AppCompatActivity() {
             binding.filterButton.setOnClickListener { showFilterPicker() }
         }
 
-        videoAdapter = VideoAdapter(onClick = { model ->
-            PlayerActivity.start(this, model)
-        })
+        videoAdapter = VideoAdapter(
+            onClick = { model ->
+                PlayerActivity.start(this, model)
+            },
+            onMore = { anchor, model ->
+                com.sparktube.app.ui.common.VideoMenu.show(anchor, model, lifecycleScope)
+            }
+        )
         channelAdapter = ChannelRowAdapter(
             onClick = { channel ->
                 ChannelActivity.start(this, channel.url, channel.name)
             }
         )
-        musicAdapter = MusicRowAdapter(onClick = { model ->
-            playMusic(model)
-        })
+        musicAdapter = MusicRowAdapter(
+            onClick = { model -> playMusic(model) },
+            onMore = { anchor, model -> showMusicMore(anchor, model) }
+        )
         suggestionAdapter = SuggestionAdapter(
             onClick = { suggestion ->
                 binding.searchInput.setText(suggestion)
@@ -277,6 +283,34 @@ class SearchActivity : AppCompatActivity() {
     private fun playMusic(model: VideoUiModel) {
         PlaybackCenter.playMusic(model.toQueueEntry(isMusic = true), radio = true)
         NowPlayingActivity.start(this)
+    }
+
+    private fun showMusicMore(anchor: android.view.View, model: VideoUiModel) {
+        if (model.uploader.isBlank()) return
+        val menu = android.widget.PopupMenu(this, anchor)
+        val starred = LocalStore.isFavoriteArtist(this, model.uploader)
+        menu.menu.add(
+            0,
+            1,
+            0,
+            if (starred) R.string.artist_unstar else R.string.artist_star
+        )
+        menu.setOnMenuItemClickListener {
+            val now = LocalStore.toggleFavoriteArtist(
+                this,
+                com.sparktube.app.data.ArtistEntry(
+                    name = model.uploader,
+                    avatarUrl = model.uploaderAvatarUrl.ifBlank { model.thumbnailUrl }
+                )
+            )
+            android.widget.Toast.makeText(
+                this,
+                if (now) R.string.artist_added else R.string.artist_removed,
+                android.widget.Toast.LENGTH_SHORT
+            ).show()
+            true
+        }
+        menu.show()
     }
 
     private fun itemCount(): Int = when {

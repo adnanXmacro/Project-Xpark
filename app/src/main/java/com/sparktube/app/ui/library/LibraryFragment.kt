@@ -8,6 +8,7 @@ import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
 import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
+import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.google.android.material.tabs.TabLayout
 import com.sparktube.app.R
@@ -55,6 +56,9 @@ class LibraryFragment : Fragment() {
 
         videoAdapter = VideoAdapter(
             onClick = { model -> PlayerActivity.start(requireContext(), model) },
+            onMore = { anchor, model ->
+                com.sparktube.app.ui.common.VideoMenu.show(anchor, model, viewLifecycleOwner.lifecycleScope)
+            },
             onLongClick = { model ->
                 if (tab == TAB_HISTORY) {
                     LocalStore.removeFromHistory(requireContext(), model.url)

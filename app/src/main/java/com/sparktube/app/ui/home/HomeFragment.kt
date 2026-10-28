@@ -67,9 +67,14 @@ class HomeFragment : Fragment() {
 
         applyHomeBrand()
 
-        adapter = VideoAdapter(onClick = { model ->
-            PlayerActivity.start(requireContext(), model)
-        })
+        adapter = VideoAdapter(
+            onClick = { model ->
+                PlayerActivity.start(requireContext(), model)
+            },
+            onMore = { anchor, model ->
+                com.sparktube.app.ui.common.VideoMenu.show(anchor, model, viewLifecycleOwner.lifecycleScope)
+            }
+        )
         binding.list.layoutManager = LinearLayoutManager(requireContext())
         binding.list.adapter = adapter
 

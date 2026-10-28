@@ -79,9 +79,14 @@ class ChannelActivity : AppCompatActivity() {
 
         binding.channelName.text = channelName
 
-        videoAdapter = VideoAdapter(onClick = { model ->
-            PlayerActivity.start(this, model)
-        })
+        videoAdapter = VideoAdapter(
+            onClick = { model ->
+                PlayerActivity.start(this, model)
+            },
+            onMore = { anchor, model ->
+                com.sparktube.app.ui.common.VideoMenu.show(anchor, model, lifecycleScope)
+            }
+        )
         playlistAdapter = YoutubePlaylistAdapter(onClick = { item ->
             YoutubePlaylistActivity.start(this, item.url, item.name)
         })

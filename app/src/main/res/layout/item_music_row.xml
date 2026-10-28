@@ -53,4 +53,14 @@
         android:layout_marginStart="8dp"
         android:textColor="@color/on_surface_variant"
         android:textSize="12sp" />
+
+    <ImageButton
+        android:id="@+id/moreButton"
+        android:layout_width="40dp"
+        android:layout_height="40dp"
+        android:background="?attr/selectableItemBackgroundBorderless"
+        android:contentDescription="@string/cd_more"
+        android:src="@drawable/ic_more_vert"
+        android:visibility="gone"
+        app:tint="@color/on_surface_variant" />
 </LinearLayout>

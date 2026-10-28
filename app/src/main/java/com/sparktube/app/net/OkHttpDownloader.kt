@@ -65,4 +65,17 @@ object OkHttpDownloader : Downloader() {
             )
         }
     }
+
+    @Throws(IOException::class)
+    fun get(url: String): String {
+        val request = okhttp3.Request.Builder()
+            .url(url)
+            .addHeader("User-Agent", USER_AGENT)
+            .get()
+            .build()
+        client.newCall(request).execute().use { response ->
+            if (!response.isSuccessful) throw IOException("HTTP ${response.code}")
+            return response.body?.string().orEmpty()
+        }
+    }
 }
