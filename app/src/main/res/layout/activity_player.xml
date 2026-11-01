@@ -199,10 +199,27 @@
         android:layout_height="44dp"
         android:background="@drawable/bg_icon_scrim"
         android:contentDescription="@string/action_scale_mode"
-        android:src="@drawable/ic_crop"
-        app:layout_constraintEnd_toStartOf="@id/fullscreenButton"
-        app:layout_constraintTop_toTopOf="parent"
-        app:tint="@color/white" />
+            android:src="@drawable/ic_crop"
+            app:layout_constraintEnd_toStartOf="@id/fullscreenButton"
+            app:layout_constraintTop_toTopOf="parent"
+            app:tint="@color/white" />
+
+    <TextView
+        android:id="@+id/sleepIndicator"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="8dp"
+        android:layout_marginBottom="8dp"
+        android:background="@drawable/bg_seek_pill"
+        android:paddingStart="10dp"
+        android:paddingTop="4dp"
+        android:paddingEnd="10dp"
+        android:paddingBottom="4dp"
+        android:textColor="@color/white"
+        android:textSize="12sp"
+        android:visibility="gone"
+        app:layout_constraintBottom_toBottomOf="@id/playerView"
+        app:layout_constraintStart_toStartOf="@id/playerView" />
 
     <androidx.core.widget.NestedScrollView
         android:id="@+id/scrollArea"

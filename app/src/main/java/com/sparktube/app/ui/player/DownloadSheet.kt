@@ -19,7 +19,15 @@ import com.sparktube.app.playback.AudioTrackGroup
 import com.sparktube.app.playback.QueueEntry
 import com.sparktube.app.playback.StreamCatalog
 import com.sparktube.app.playback.effectiveHeight
+import com.sparktube.app.util.Formatters
 import com.sparktube.app.util.Themes
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.cancel
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import org.schabi.newpipe.extractor.stream.AudioStream
 import org.schabi.newpipe.extractor.stream.VideoStream
 
 /**
@@ -34,6 +42,8 @@ class DownloadSheet(
     private val catalog: StreamCatalog,
     private val audioOnly: Boolean = false
 ) : BottomSheetDialog(context) {
+
+    private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
 
     private fun dp(value: Int): Int = TypedValue.applyDimension(
         TypedValue.COMPLEX_UNIT_DIP, value.toFloat(), context.resources.displayMetrics
@@ -130,18 +140,22 @@ class DownloadSheet(
             catalog.videoOnly.forEach { v ->
                 val quality = "${v.effectiveHeight()}p"
                 val alreadyDone = downloaded(DownloadCenter.TYPE_AV, quality)
-                body.addView(qualityRow(quality, alreadyDone) {
+                val row = qualityRow(quality, alreadyDone) {
                     startAv(v, audioTrack, quality)
-                })
+                }
+                body.addView(row)
+                fillAvSize(row, quality, v, audioTrack)
             }
             return
         }
         catalog.muxed.forEach { v ->
             val quality = "${v.effectiveHeight()}p"
             val alreadyDone = downloaded(DownloadCenter.TYPE_VIDEO, quality)
-            body.addView(qualityRow("$quality (muxed)", alreadyDone) {
+            val row = qualityRow("$quality (muxed)", alreadyDone) {
                 startVideo(v, quality)
-            })
+            }
+            body.addView(row)
+            fillVideoSize(row, "$quality (muxed)", v)
         }
     }
 
@@ -149,9 +163,11 @@ class DownloadSheet(
         catalog.videoOnly.forEach { v ->
             val quality = "${v.effectiveHeight()}p"
             val alreadyDone = downloaded(DownloadCenter.TYPE_VIDEO, quality)
-            body.addView(qualityRow("$quality (no sound)", alreadyDone) {
+            val row = qualityRow("$quality (no sound)", alreadyDone) {
                 startVideo(v, quality)
-            })
+            }
+            body.addView(row)
+            fillVideoSize(row, "$quality (no sound)", v)
         }
     }
 
@@ -166,7 +182,8 @@ class DownloadSheet(
                     "Audio"
                 }
                 val alreadyDone = downloaded(DownloadCenter.TYPE_AUDIO, kbps)
-                body.addView(qualityRow(kbps + suffix(audioTrack), alreadyDone) {
+                val base = kbps + suffix(audioTrack)
+                val row = qualityRow(base, alreadyDone) {
                     if (alreadyDone) {
                         Toast.makeText(context, R.string.already_downloaded, Toast.LENGTH_SHORT).show()
                     } else {
@@ -184,8 +201,70 @@ class DownloadSheet(
                         toastStarted()
                     }
                     dismiss()
-                })
+                }
+                body.addView(row)
+                fillAudioSize(row, base, stream, alreadyDone)
             }
+    }
+
+    private fun fillAvSize(
+        row: TextView,
+        quality: String,
+        video: VideoStream,
+        audioTrack: AudioTrackGroup
+    ) {
+        scope.launch {
+            val videoBytes = sizeOf(video.content, video.bitrate, catalog.durationSec)
+            val audio = audioTrack.best
+            val audioBytes = if (audio != null) {
+                sizeOf(audio.content, audioBitrate(audio), catalog.durationSec)
+            } else {
+                -1L
+            }
+            val total = when {
+                videoBytes > 0L && audioBytes > 0L -> videoBytes + audioBytes
+                videoBytes > 0L -> videoBytes
+                audioBytes > 0L -> audioBytes
+                else -> -1L
+            }
+            applySize(row, quality, total, downloaded(DownloadCenter.TYPE_AV, quality))
+        }
+    }
+
+    private fun fillVideoSize(row: TextView, label: String, video: VideoStream) {
+        scope.launch {
+            val bytes = sizeOf(video.content, video.bitrate, catalog.durationSec)
+            applySize(row, label, bytes, downloaded(DownloadCenter.TYPE_VIDEO, "${video.effectiveHeight()}p"))
+        }
+    }
+
+    private fun fillAudioSize(row: TextView, label: String, stream: AudioStream, done: Boolean) {
+        scope.launch {
+            val bytes = sizeOf(stream.content, audioBitrate(stream), catalog.durationSec)
+            applySize(row, label, bytes, done)
+        }
+    }
+
+    private suspend fun sizeOf(url: String, bitrate: Int, durationSec: Long): Long {
+        val probed = DownloadCenter.probeSize(url)
+        if (probed > 0L) return probed
+        return DownloadCenter.estimateSize(bitrate, durationSec)
+    }
+
+    private fun audioBitrate(stream: AudioStream): Int =
+        when {
+            stream.bitrate > 0 -> stream.bitrate
+            stream.averageBitrate > 0 -> stream.averageBitrate * 1000
+            else -> 0
+        }
+
+    private suspend fun applySize(row: TextView, label: String, bytes: Long, done: Boolean) {
+        if (bytes <= 0L) return
+        withContext(Dispatchers.Main) {
+            val size = Formatters.formatFileSize(bytes)
+            val doneSuffix = if (done) " • ${context.getString(R.string.download_option_done)}" else ""
+            row.text = "$label • $size$doneSuffix"
+        }
     }
 
     private fun startAv(v: VideoStream, audioTrack: AudioTrackGroup, quality: String) {
@@ -312,5 +391,10 @@ class DownloadSheet(
 
     private fun toastStarted() {
         Toast.makeText(context, R.string.download_started, Toast.LENGTH_SHORT).show()
+    }
+
+    override fun dismiss() {
+        scope.cancel()
+        super.dismiss()
     }
 }

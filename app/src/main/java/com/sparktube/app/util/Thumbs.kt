@@ -53,4 +53,49 @@ object Thumbs {
             )
         }
     }
+
+    /**
+     * High-resolution still for the music now-playing square. Walks
+     * maxresdefault → sddefault → hq720 → original so a large ImageView
+     * is not stuck with a 480px hqdefault bitmap.
+     */
+    fun loadHiRes(view: ImageView, url: String?, pixelSize: Int = 0) {
+        val original = url.orEmpty()
+        if (original.isBlank()) {
+            view.setImageDrawable(placeholderDrawable(view))
+            return
+        }
+        loadHiResChain(view, stillChain(original), 0, pixelSize)
+    }
+
+    private fun loadHiResChain(view: ImageView, chain: List<String>, index: Int, pixelSize: Int) {
+        if (index !in chain.indices) {
+            view.setImageDrawable(placeholderDrawable(view))
+            return
+        }
+        view.load(chain[index]) {
+            placeholder(placeholderDrawable(view))
+            error(placeholderDrawable(view))
+            crossfade(true)
+            allowHardware(true)
+            if (pixelSize > 0) size(pixelSize)
+            listener(
+                onError = { _, _ ->
+                    loadHiResChain(view, chain, index + 1, pixelSize)
+                }
+            )
+        }
+    }
+
+    /** YouTube still filenames from sharpest to the original URL. */
+    private fun stillChain(url: String): List<String> {
+        val match = STILL_FILE.find(url) ?: return listOf(url)
+        val ext = match.groupValues[2]
+        val variants = listOf("maxresdefault", "sddefault", "hq720", "hqdefault", "mqdefault")
+            .map { url.replace(match.value, "/$it$ext") }
+        return (variants + url).distinct()
+    }
+
+    private val STILL_FILE =
+        Regex("/(maxresdefault|sddefault|hq720|hqdefault|mqdefault|hqdefault_live)(\\.[A-Za-z0-9]+)")
 }

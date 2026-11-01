@@ -20,6 +20,7 @@ import com.sparktube.app.ui.channel.ChannelActivity
 import com.sparktube.app.ui.common.ChannelRowAdapter
 import com.sparktube.app.ui.common.DownloadAdapter
 import com.sparktube.app.ui.common.PlaylistAdapter
+import com.sparktube.app.ui.common.PlaylistSheets
 import com.sparktube.app.ui.common.VideoAdapter
 import com.sparktube.app.ui.common.toEntry
 import com.sparktube.app.ui.common.toUiModel
@@ -89,7 +90,7 @@ class LibraryFragment : Fragment() {
             onClick = { playlist ->
                 PlaylistActivity.start(requireContext(), playlist.id)
             },
-            onLongClick = { playlist -> confirmDeletePlaylist(playlist) }
+            onLongClick = { playlist -> showPlaylistActions(playlist) }
         )
 
         binding.list.layoutManager = LinearLayoutManager(requireContext())
@@ -106,6 +107,9 @@ class LibraryFragment : Fragment() {
         })
 
         binding.tabs.selectTab(binding.tabs.getTabAt(tab))
+        binding.createPlaylistButton.setOnClickListener {
+            PlaylistSheets.showNewDialog(requireContext(), music = false) { refresh() }
+        }
     }
 
     override fun onResume() {
@@ -127,6 +131,7 @@ class LibraryFragment : Fragment() {
             TAB_PLAYLISTS -> bindPlaylists()
             else -> bindDownloads()
         }
+        binding.createPlaylistButton.isVisible = tab == TAB_PLAYLISTS
     }
 
     private fun bindVideos(entries: List<com.sparktube.app.data.VideoEntry>, emptyText: Int) {
@@ -163,6 +168,28 @@ class LibraryFragment : Fragment() {
         playlistAdapter.submitList(playlists)
         binding.emptyView.setText(R.string.empty_playlists)
         binding.emptyView.isVisible = playlists.isEmpty()
+    }
+
+    private fun showPlaylistActions(playlist: com.sparktube.app.data.Playlist) {
+        AlertDialog.Builder(requireContext())
+            .setTitle(playlist.name)
+            .setItems(
+                arrayOf(
+                    getString(R.string.rename_playlist),
+                    getString(R.string.delete_playlist_confirm)
+                )
+            ) { _, which ->
+                when (which) {
+                    0 -> PlaylistSheets.showRenameDialog(
+                        requireContext(),
+                        playlist.id,
+                        playlist.name,
+                        music = false
+                    ) { refresh() }
+                    1 -> confirmDeletePlaylist(playlist)
+                }
+            }
+            .show()
     }
 
     private fun confirmDeletePlaylist(playlist: com.sparktube.app.data.Playlist) {

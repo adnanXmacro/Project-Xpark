@@ -14,7 +14,6 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.core.view.isVisible
-import coil.load
 import com.sparktube.app.R
 import com.sparktube.app.data.ArtistEntry
 import com.sparktube.app.data.LocalStore
@@ -22,6 +21,9 @@ import com.sparktube.app.databinding.ActivityNowPlayingBinding
 import com.sparktube.app.download.DownloadCenter
 import com.sparktube.app.playback.PlaybackCenter
 import com.sparktube.app.playback.QueueEntry
+import com.sparktube.app.playback.toVideoEntry
+import com.sparktube.app.ui.common.PlaylistSheets
+import com.sparktube.app.ui.common.SleepTimerSheet
 import com.sparktube.app.ui.player.DownloadSheet
 import com.sparktube.app.util.AppPrefs
 import com.sparktube.app.util.PanelTransitions
@@ -56,12 +58,15 @@ class NowPlayingActivity : AppCompatActivity() {
 
         // Radio keeps adding songs while it plays: keep "Up next" current.
         override fun onQueueChanged() = bindUpNext()
+
+        override fun onSleepTimerChanged() = bindSleepButton()
     }
 
     private val progressRunnable = object : Runnable {
         override fun run() {
             updateProgress()
             updateDownloadState()
+            bindSleepButton()
             handler.postDelayed(this, 500)
         }
     }
@@ -106,6 +111,13 @@ class NowPlayingActivity : AppCompatActivity() {
         binding.loopButton.setOnClickListener {
             MusicLoopUi.showPicker(this) { bindLoopButton() }
         }
+        binding.sleepButton.setOnClickListener {
+            SleepTimerSheet(this).show()
+        }
+        binding.playlistButton.setOnClickListener {
+            val entry = PlaybackCenter.currentEntry ?: return@setOnClickListener
+            PlaylistSheets.showAdd(this, entry.toVideoEntry().copy(isMusic = true), music = true)
+        }
         binding.queueButton.setOnClickListener { showQueue() }
         binding.upNextCard.setOnClickListener { showQueue() }
 
@@ -118,6 +130,7 @@ class NowPlayingActivity : AppCompatActivity() {
                 lp.width = size
                 lp.height = size
                 binding.art.layoutParams = lp
+                loadArt(size)
             }
         }
 
@@ -213,14 +226,43 @@ class NowPlayingActivity : AppCompatActivity() {
         val entry = PlaybackCenter.currentEntry ?: run { finish(); return }
         binding.title.text = entry.title
         binding.subtitle.text = entry.uploader
-        Thumbs.load(binding.art, entry.thumbnailUrl)
+        loadArt(binding.art.width.coerceAtLeast(binding.art.layoutParams.width))
         binding.playingLabel.isVisible = true
         bindPlayButton()
         bindFavorite()
         bindLoopButton()
+        bindSleepButton()
         bindUpNext()
         updateProgress()
         updateDownloadState()
+    }
+
+    private fun loadArt(pixelSize: Int) {
+        val entry = PlaybackCenter.currentEntry ?: return
+        Thumbs.loadHiRes(binding.art, entry.thumbnailUrl, pixelSize.coerceAtLeast(0))
+    }
+
+    private fun bindSleepButton() {
+        if (isFinishing) return
+        val active = PlaybackCenter.isSleepTimerActive
+        binding.sleepButton.setColorFilter(
+            getColor(if (active) R.color.music_green else R.color.on_surface)
+        )
+        binding.sleepButton.contentDescription = if (active) {
+            remainingSleepLabel()
+        } else {
+            getString(R.string.cd_sleep_timer)
+        }
+    }
+
+    private fun remainingSleepLabel(): String {
+        val ms = PlaybackCenter.sleepTimerRemainingMs
+        val minutes = (ms / 60_000L).toInt()
+        return if (minutes >= 1) {
+            getString(R.string.sleep_timer_remaining_fmt, minutes)
+        } else {
+            getString(R.string.sleep_timer_remaining_sec_fmt, (ms / 1000L).toInt().coerceAtLeast(1))
+        }
     }
 
     private fun bindPlayButton() {

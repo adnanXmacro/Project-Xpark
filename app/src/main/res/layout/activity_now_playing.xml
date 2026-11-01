@@ -127,10 +127,20 @@
             </LinearLayout>
 
             <ImageButton
+                android:id="@+id/playlistButton"
+                android:layout_width="48dp"
+                android:layout_height="48dp"
+                android:layout_marginStart="4dp"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:contentDescription="@string/cd_add_to_playlist"
+                android:src="@drawable/ic_video_library"
+                app:tint="@color/on_surface" />
+
+            <ImageButton
                 android:id="@+id/favoriteButton"
                 android:layout_width="48dp"
                 android:layout_height="48dp"
-                android:layout_marginStart="8dp"
+                android:layout_marginStart="4dp"
                 android:background="?attr/selectableItemBackgroundBorderless"
                 android:contentDescription="@string/action_favorite"
                 android:src="@drawable/ic_favorite_border"
@@ -226,6 +236,16 @@
                 android:background="?attr/selectableItemBackgroundBorderless"
                 android:contentDescription="@string/cd_loop"
                 android:src="@drawable/ic_repeat"
+                app:tint="@color/on_surface" />
+
+            <ImageButton
+                android:id="@+id/sleepButton"
+                android:layout_width="0dp"
+                android:layout_height="46dp"
+                android:layout_weight="1"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:contentDescription="@string/cd_sleep_timer"
+                android:src="@drawable/ic_sleep"
                 app:tint="@color/on_surface" />
 
             <ImageButton

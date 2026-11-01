@@ -27,8 +27,10 @@ import com.sparktube.app.data.LocalStore
 import com.sparktube.app.data.YtRepository
 import com.sparktube.app.databinding.FragmentMusicBinding
 import com.sparktube.app.playback.PlaybackCenter
+import com.sparktube.app.ui.common.PlaylistSheets
 import com.sparktube.app.ui.common.SkeletonPulse
 import com.sparktube.app.ui.common.VideoUiModel
+import com.sparktube.app.ui.common.toEntry
 import com.sparktube.app.ui.common.toQueueEntry
 import com.sparktube.app.ui.common.toUiModel
 import com.sparktube.app.ui.search.SearchActivity
@@ -72,6 +74,9 @@ class MusicFragment : Fragment() {
         }
         binding.downloadsButton.setOnClickListener {
             MusicListActivity.start(requireContext(), favourites = false)
+        }
+        binding.playlistsButton.setOnClickListener {
+            MusicPlaylistsActivity.start(requireContext())
         }
         binding.addArtistButton.setOnClickListener {
             ArtistPickerActivity.start(requireContext())
@@ -282,12 +287,13 @@ class MusicFragment : Fragment() {
         val menu = PopupMenu(requireContext(), anchor)
         menu.menu.add(0, 1, 0, R.string.cd_play_song)
         menu.menu.add(0, 2, 1, R.string.go_to_artist)
+        menu.menu.add(0, 4, 2, R.string.action_playlist)
         if (model.uploader.isNotBlank()) {
             val starred = LocalStore.isFavoriteArtist(requireContext(), model.uploader)
             menu.menu.add(
                 0,
                 3,
-                2,
+                3,
                 if (starred) R.string.artist_unstar else R.string.artist_star
             )
         }
@@ -298,6 +304,11 @@ class MusicFragment : Fragment() {
                     requireContext(),
                     model.uploader,
                     model.uploaderAvatarUrl.ifBlank { model.thumbnailUrl }
+                )
+                4 -> PlaylistSheets.showAdd(
+                    requireContext(),
+                    model.toEntry().copy(isMusic = true),
+                    music = true
                 )
                 3 -> {
                     val now = LocalStore.toggleFavoriteArtist(

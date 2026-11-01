@@ -5,9 +5,7 @@ import android.content.Intent
 import android.graphics.Typeface
 import android.graphics.drawable.GradientDrawable
 import android.net.Uri
-import android.os.Build
 import android.os.Bundle
-import android.provider.Settings
 import android.util.TypedValue
 import android.view.Gravity
 import android.view.ViewGroup
@@ -449,7 +447,7 @@ class SettingsPageActivity : AppCompatActivity() {
                 getString(R.string.settings_open_youtube_links),
                 getString(R.string.settings_open_youtube_links_value)
             ) {
-                showOpenYoutubeLinksHelp()
+                OpenYoutubeLinksWizard.show(this)
             }
         )
         content.addView(
@@ -459,38 +457,6 @@ class SettingsPageActivity : AppCompatActivity() {
                 )
             }
         )
-    }
-
-    /**
-     * Morphe-style setup: Android owns the default, not an in-app switch.
-     * Open Tube can only register as a candidate; the user must enable our
-     * supported links and turn YouTube's off, or YouTube keeps the taps.
-     */
-    private fun showOpenYoutubeLinksHelp() {
-        AlertDialog.Builder(this)
-            .setTitle(R.string.settings_open_youtube_links)
-            .setMessage(R.string.settings_open_youtube_links_help)
-            .setPositiveButton(R.string.settings_open_youtube_links_open) { _, _ ->
-                openAppLinkSettings()
-            }
-            .setNegativeButton(android.R.string.cancel, null)
-            .show()
-    }
-
-    private fun openAppLinkSettings() {
-        val pkg = Uri.parse("package:$packageName")
-        val candidates = buildList {
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-                add(Intent(Settings.ACTION_APP_OPEN_BY_DEFAULT_SETTINGS, pkg))
-            }
-            add(Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS, pkg))
-        }
-        val opened = candidates.any { intent ->
-            runCatching { startActivity(intent) }.isSuccess
-        }
-        if (!opened) {
-            Toast.makeText(this, R.string.settings_open_youtube_links_failed, Toast.LENGTH_SHORT).show()
-        }
     }
 
     /** e.g. "8 controls" — a quick hint of how many are in the player. */

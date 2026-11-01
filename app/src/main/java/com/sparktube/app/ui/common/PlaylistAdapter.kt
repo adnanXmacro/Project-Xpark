@@ -16,7 +16,8 @@ import com.sparktube.app.util.Thumbs
  */
 class PlaylistAdapter(
     private val onClick: (Playlist) -> Unit,
-    private val onLongClick: (Playlist) -> Unit
+    private val onLongClick: (Playlist) -> Unit,
+    private val songs: Boolean = false
 ) : ListAdapter<Playlist, PlaylistAdapter.VH>(DIFF) {
 
     companion object {
@@ -38,7 +39,9 @@ class PlaylistAdapter(
 
         b.title.text = item.name
         b.meta.text = b.root.context.resources.getQuantityString(
-            R.plurals.playlist_video_count, item.items.size, item.items.size
+            if (songs) R.plurals.playlist_song_count else R.plurals.playlist_video_count,
+            item.items.size,
+            item.items.size
         )
         // The playlist "cover" is simply its first video's thumbnail.
         Thumbs.load(b.thumb, item.items.firstOrNull()?.thumbnailUrl)

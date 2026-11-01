@@ -87,6 +87,31 @@ object Formatters {
         return days < window.maxDays
     }
 
+    /**
+     * File size for download estimates and the About storage row.
+     * 1024-based units; one decimal unless the value is exact.
+     */
+    fun formatFileSize(bytes: Long): String {
+        if (bytes < 0L) return ""
+        val locale = Locale.US
+        return when {
+            bytes < 1024L -> "$bytes B"
+            bytes < 1024L * 1024L -> formatSizeUnit(bytes, 1024.0, "KB", locale)
+            bytes < 1024L * 1024L * 1024L -> formatSizeUnit(bytes, 1024.0 * 1024.0, "MB", locale)
+            else -> formatSizeUnit(bytes, 1024.0 * 1024.0 * 1024.0, "GB", locale)
+        }
+    }
+
+    private fun formatSizeUnit(bytes: Long, divisor: Double, unit: String, locale: Locale): String {
+        val value = bytes / divisor
+        val exact = abs(value - kotlin.math.round(value)) < 0.05
+        return if (exact) {
+            String.format(locale, "%.0f %s", value, unit)
+        } else {
+            String.format(locale, "%.1f %s", value, unit)
+        }
+    }
+
     fun formatViewsLabel(count: Long): String {
         val views = formatViewCount(count)
         return if (views.isEmpty()) "" else "$views views"

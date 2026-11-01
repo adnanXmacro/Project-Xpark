@@ -60,6 +60,13 @@ class PlaylistActivity : AppCompatActivity() {
 
         binding.backButton.setOnClickListener { finish() }
         binding.playAllButton.setOnClickListener { playFrom(0) }
+        binding.title.setOnLongClickListener {
+            val playlist = LocalStore.playlist(this, playlistId) ?: return@setOnLongClickListener true
+            com.sparktube.app.ui.common.PlaylistSheets.showRenameDialog(
+                this, playlist.id, playlist.name, music = false
+            ) { reload() }
+            true
+        }
     }
 
     override fun onResume() {

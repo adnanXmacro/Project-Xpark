@@ -18,6 +18,7 @@ object AppPrefs {
     private const val KEY_MUSIC_LOOP_MINUTES = "music_loop_minutes"
     private const val KEY_ANIMATIONS = "animations"
     private const val KEY_OPEN_YOUTUBE_LINKS_HINT = "open_youtube_links_hint_shown_v128"
+    private const val KEY_TOTAL_BYTES_DOWNLOADED = "total_bytes_downloaded"
 
     // Default video quality: separate values for Wi-Fi and mobile data.
     private const val KEY_DEFAULT_VIDEO_HEIGHT_WIFI = "default_video_height_wifi"
@@ -208,6 +209,21 @@ object AppPrefs {
         set(value) {
             sp.edit().putBoolean(KEY_OPEN_YOUTUBE_LINKS_HINT, value).apply()
         }
+
+    /**
+     * Lifetime bytes successfully downloaded. Grows only on completed jobs;
+     * deleting files does not decrease it.
+     */
+    var totalBytesDownloaded: Long
+        get() = sp.getLong(KEY_TOTAL_BYTES_DOWNLOADED, 0L)
+        set(value) {
+            sp.edit().putLong(KEY_TOTAL_BYTES_DOWNLOADED, value.coerceAtLeast(0L)).apply()
+        }
+
+    fun addBytesDownloaded(bytes: Long) {
+        if (bytes <= 0L) return
+        totalBytesDownloaded = totalBytesDownloaded + bytes
+    }
 
     /** Fullscreen video scale preference: fit / crop / stretch (default: fit). */
     var fullscreenScale: String

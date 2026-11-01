@@ -31,7 +31,9 @@ object BackupManager {
         "subscriptions_json",
         "searches_json",
         "music_searches_json",
-        "favorite_artists_json"
+        "favorite_artists_json",
+        "playlists_json",
+        "music_playlists_json"
     )
 
     suspend fun exportTo(context: Context, uri: Uri): Boolean = withContext(Dispatchers.IO) {

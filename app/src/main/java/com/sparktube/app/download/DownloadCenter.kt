@@ -9,6 +9,7 @@ import com.sparktube.app.R
 import com.sparktube.app.data.DownloadRecord
 import com.sparktube.app.data.LocalStore
 import com.sparktube.app.net.OkHttpDownloader
+import com.sparktube.app.util.AppPrefs
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -61,6 +62,9 @@ object DownloadCenter {
 
     /** Chunk retry attempts before a download fails. */
     private const val CHUNK_RETRIES = 3
+
+    /** Copy buffer for range / plain downloads. */
+    private const val COPY_BUFFER = 256 * 1024
 
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
 
@@ -128,6 +132,36 @@ object DownloadCenter {
         }
         if (total <= 0L) return 0
         return ((done * 100) / total).toInt().coerceIn(0, 100)
+    }
+
+    /**
+     * Best-effort Content-Length via a 1-byte Range probe. Returns -1 when
+     * the size is unknown so the UI can fall back to bitrate × duration.
+     */
+    suspend fun probeSize(url: String): Long = withContext(Dispatchers.IO) {
+        if (url.isBlank()) return@withContext -1L
+        val request = Request.Builder()
+            .url(url)
+            .header("User-Agent", OkHttpDownloader.USER_AGENT)
+            .header("Range", "bytes=0-0")
+            .build()
+        runCatching {
+            client.newCall(request).execute().use { resp ->
+                if (!resp.isSuccessful && resp.code != 206) return@use -1L
+                val fromRange = resp.header("Content-Range")
+                    ?.substringAfterLast('/')
+                    ?.toLongOrNull()
+                if (fromRange != null && fromRange > 0L) return@use fromRange
+                val length = resp.body?.contentLength() ?: -1L
+                if (length > 1L) length else -1L
+            }
+        }.getOrDefault(-1L)
+    }
+
+    /** Bitrate (bits/sec) × duration fallback when a probe fails. */
+    fun estimateSize(bitrate: Int, durationSec: Long): Long {
+        if (bitrate <= 0 || durationSec <= 0L) return -1L
+        return (bitrate.toLong() * durationSec) / 8L
     }
 
     /** Deletes every download (files + registry). */
@@ -287,12 +321,20 @@ object DownloadCenter {
                 }
                 if (newStatus != record.status) {
                     LocalStore.updateDownloadStatus(context, record.downloadIds.first(), newStatus)
-                    if (newStatus == STATUS_DONE || newStatus == STATUS_FAILED) {
+                        if (newStatus == STATUS_DONE || newStatus == STATUS_FAILED) {
                         // Terminal state: now the live jobs can go.
-                        recordJobs.forEach { jobs.remove(it.id) }
                         if (newStatus == STATUS_DONE) {
+                            val bytes = recordJobs.sumOf { job ->
+                                when {
+                                    job.size > 0L -> job.size
+                                    job.file.exists() -> job.file.length()
+                                    else -> job.progress.get()
+                                }
+                            }
+                            AppPrefs.addBytesDownloaded(bytes)
                             announceDone(context)
                         }
+                        recordJobs.forEach { jobs.remove(it.id) }
                     }
                 }
             }
@@ -420,7 +462,7 @@ object DownloadCenter {
                     val body = resp.body ?: return@withContext false
                     file.outputStream().use { out ->
                         body.byteStream().use { input ->
-                            val buf = ByteArray(64 * 1024)
+                            val buf = ByteArray(COPY_BUFFER)
                             while (true) {
                                 if (cancelled.get()) return@withContext false
                                 val read = input.read(buf)
@@ -455,7 +497,7 @@ object DownloadCenter {
                             RandomAccessFile(file, "rw").use { raf ->
                                 raf.seek(start)
                                 val input = body.byteStream()
-                                val buf = ByteArray(64 * 1024)
+                                    val buf = ByteArray(COPY_BUFFER)
                                 var written = 0L
                                 val expected = end - start + 1
                                 while (written < expected) {

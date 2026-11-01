@@ -24,6 +24,7 @@ import com.sparktube.app.databinding.FragmentMenuBinding
 import com.sparktube.app.ui.update.UpdatePrompt
 import com.sparktube.app.util.AppPrefs
 import com.sparktube.app.util.BackupManager
+import com.sparktube.app.util.HelpLine
 import com.sparktube.app.util.Themes
 import com.sparktube.app.util.UpdateChecker
 import kotlinx.coroutines.launch
@@ -68,20 +69,13 @@ class MenuFragment : Fragment() {
             SettingsPageActivity.start(requireContext(), SettingsPageActivity.TYPE_MUSIC)
         }
         binding.rowTelegram.setOnClickListener {
-            runCatching {
-                startActivity(
-                    android.content.Intent(
-                        android.content.Intent.ACTION_VIEW,
-                        Uri.parse(HELP_LINE_URL)
-                    )
-                )
-            }
+            HelpLine.openEmail(requireContext())
         }
         // Import / export now live together in their own backup submenu
         // (clear data moved into the general Settings page).
         binding.rowBackup.setOnClickListener { showBackupSheet() }
         binding.rowCheckUpdate.setOnClickListener { checkForUpdate(manual = true) }
-        binding.rowAbout.setOnClickListener { showAbout() }
+        binding.rowAbout.setOnClickListener { AboutActivity.start(requireContext()) }
 
         binding.version.text = getString(R.string.version_fmt, BuildConfig.VERSION_NAME)
     }
@@ -271,20 +265,8 @@ class MenuFragment : Fragment() {
         }
     }
 
-    private fun showAbout() {
-        AlertDialog.Builder(requireContext())
-            .setTitle(R.string.app_name)
-            .setMessage(getString(R.string.about_text))
-            .setPositiveButton(android.R.string.ok, null)
-            .show()
-    }
-
     override fun onDestroyView() {
         super.onDestroyView()
         _binding = null
-    }
-
-    private companion object {
-        const val HELP_LINE_URL = "https://discord.gg/tY4jGUJ4"
     }
 }

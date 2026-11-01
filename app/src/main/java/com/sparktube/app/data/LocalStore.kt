@@ -64,6 +64,7 @@ object LocalStore {
     private const val KEY_SUBSCRIPTIONS = "subscriptions_json"
     private const val KEY_DOWNLOADS = "downloads_json"
     private const val KEY_PLAYLISTS = "playlists_json"
+    private const val KEY_MUSIC_PLAYLISTS = "music_playlists_json"
     private const val KEY_SEARCHES = "searches_json"
     private const val KEY_MUSIC_SEARCHES = "music_searches_json"
     private const val KEY_FAVORITE_ARTISTS = "favorite_artists_json"
@@ -332,22 +333,69 @@ object LocalStore {
 
     // ----- Playlists -----
 
-    /** All playlists, newest first. */
+    /** All video playlists, newest first. */
     fun playlists(context: Context): List<Playlist> =
-        readPlaylists(prefs(context))
+        readPlaylists(prefs(context), KEY_PLAYLISTS)
 
     fun playlist(context: Context, id: Long): Playlist? =
         playlists(context).firstOrNull { it.id == id }
 
     /**
-     * Creates a playlist. @return the new playlist, or null when the name is
+     * Creates a video playlist. @return the new playlist, or null when the name is
      * empty or another playlist already uses it (case-insensitive).
      */
-    fun createPlaylist(context: Context, name: String): Playlist? {
+    fun createPlaylist(context: Context, name: String): Playlist? =
+        createPlaylistIn(context, KEY_PLAYLISTS, name)
+
+    fun deletePlaylist(context: Context, id: Long) =
+        deletePlaylistIn(context, KEY_PLAYLISTS, id)
+
+    /**
+     * Renames a video playlist. @return false when the name is empty or clashes.
+     */
+    fun renamePlaylist(context: Context, id: Long, name: String): Boolean =
+        renamePlaylistIn(context, KEY_PLAYLISTS, id, name)
+
+    /** @return true when the video was added; false when it was already in. */
+    fun addToPlaylist(context: Context, id: Long, entry: VideoEntry): Boolean =
+        addToPlaylistIn(context, KEY_PLAYLISTS, id, entry)
+
+    /** @return true when a video was actually removed. */
+    fun removeFromPlaylist(context: Context, id: Long, url: String): Boolean =
+        removeFromPlaylistIn(context, KEY_PLAYLISTS, id, url)
+
+    fun isVideoInPlaylist(context: Context, id: Long, url: String): Boolean =
+        playlist(context, id)?.items?.any { it.url == url } == true
+
+    // ----- Music playlists (separate store from video playlists) -----
+
+    fun musicPlaylists(context: Context): List<Playlist> =
+        readPlaylists(prefs(context), KEY_MUSIC_PLAYLISTS)
+
+    fun musicPlaylist(context: Context, id: Long): Playlist? =
+        musicPlaylists(context).firstOrNull { it.id == id }
+
+    fun createMusicPlaylist(context: Context, name: String): Playlist? =
+        createPlaylistIn(context, KEY_MUSIC_PLAYLISTS, name)
+
+    fun deleteMusicPlaylist(context: Context, id: Long) =
+        deletePlaylistIn(context, KEY_MUSIC_PLAYLISTS, id)
+
+    fun renameMusicPlaylist(context: Context, id: Long, name: String): Boolean =
+        renamePlaylistIn(context, KEY_MUSIC_PLAYLISTS, id, name)
+
+    fun addToMusicPlaylist(context: Context, id: Long, entry: VideoEntry): Boolean =
+        addToPlaylistIn(context, KEY_MUSIC_PLAYLISTS, id, entry.copy(isMusic = true))
+
+    fun removeFromMusicPlaylist(context: Context, id: Long, url: String): Boolean =
+        removeFromPlaylistIn(context, KEY_MUSIC_PLAYLISTS, id, url)
+
+    private fun createPlaylistIn(context: Context, key: String, name: String): Playlist? {
         val clean = name.trim()
         if (clean.isEmpty()) return null
         val ctx = context.applicationContext
-        val list = playlists(ctx).toMutableList()
+        val sp = prefs(ctx)
+        val list = readPlaylists(sp, key).toMutableList()
         if (list.any { it.name.equals(clean, ignoreCase = true) }) return null
         val playlist = Playlist(
             id = System.currentTimeMillis(),
@@ -356,21 +404,41 @@ object LocalStore {
             items = emptyList()
         )
         list.add(0, playlist)
-        writePlaylists(prefs(ctx), list)
+        writePlaylists(sp, key, list)
         return playlist
     }
 
-    fun deletePlaylist(context: Context, id: Long) {
+    private fun deletePlaylistIn(context: Context, key: String, id: Long) {
         val ctx = context.applicationContext
-        val list = playlists(ctx).toMutableList()
+        val sp = prefs(ctx)
+        val list = readPlaylists(sp, key).toMutableList()
         list.removeAll { it.id == id }
-        writePlaylists(prefs(ctx), list)
+        writePlaylists(sp, key, list)
     }
 
-    /** @return true when the video was added; false when it was already in. */
-    fun addToPlaylist(context: Context, id: Long, entry: VideoEntry): Boolean {
+    private fun renamePlaylistIn(context: Context, key: String, id: Long, name: String): Boolean {
+        val clean = name.trim()
+        if (clean.isEmpty()) return false
         val ctx = context.applicationContext
-        val list = playlists(ctx).toMutableList()
+        val sp = prefs(ctx)
+        val list = readPlaylists(sp, key).toMutableList()
+        val idx = list.indexOfFirst { it.id == id }
+        if (idx < 0) return false
+        if (list.any { it.id != id && it.name.equals(clean, ignoreCase = true) }) return false
+        list[idx] = list[idx].copy(name = clean)
+        writePlaylists(sp, key, list)
+        return true
+    }
+
+    private fun addToPlaylistIn(
+        context: Context,
+        key: String,
+        id: Long,
+        entry: VideoEntry
+    ): Boolean {
+        val ctx = context.applicationContext
+        val sp = prefs(ctx)
+        val list = readPlaylists(sp, key).toMutableList()
         val idx = list.indexOfFirst { it.id == id }
         if (idx < 0) return false
         val target = list[idx]
@@ -381,26 +449,28 @@ object LocalStore {
             items.removeAt(items.size - 1)
         }
         list[idx] = target.copy(items = items)
-        writePlaylists(prefs(ctx), list)
+        writePlaylists(sp, key, list)
         return true
     }
 
-    /** @return true when a video was actually removed. */
-    fun removeFromPlaylist(context: Context, id: Long, url: String): Boolean {
+    private fun removeFromPlaylistIn(
+        context: Context,
+        key: String,
+        id: Long,
+        url: String
+    ): Boolean {
         val ctx = context.applicationContext
-        val list = playlists(ctx).toMutableList()
+        val sp = prefs(ctx)
+        val list = readPlaylists(sp, key).toMutableList()
         val idx = list.indexOfFirst { it.id == id }
         if (idx < 0) return false
         val target = list[idx]
         val items = target.items.filterNot { it.url == url }
         if (items.size == target.items.size) return false
         list[idx] = target.copy(items = items)
-        writePlaylists(prefs(ctx), list)
+        writePlaylists(sp, key, list)
         return true
     }
-
-    fun isVideoInPlaylist(context: Context, id: Long, url: String): Boolean =
-        playlist(context, id)?.items?.any { it.url == url } == true
 
     // ----- JSON helpers -----
 
@@ -518,8 +588,8 @@ object LocalStore {
 
     // ----- Playlist JSON helpers -----
 
-    private fun readPlaylists(sp: android.content.SharedPreferences): List<Playlist> {
-        val raw = sp.getString(KEY_PLAYLISTS, null) ?: return emptyList()
+    private fun readPlaylists(sp: android.content.SharedPreferences, key: String): List<Playlist> {
+        val raw = sp.getString(key, null) ?: return emptyList()
         return try {
             val arr = JSONArray(raw)
             (0 until arr.length()).mapNotNull { idx ->
@@ -541,7 +611,11 @@ object LocalStore {
         }
     }
 
-    private fun writePlaylists(sp: android.content.SharedPreferences, list: List<Playlist>) {
+    private fun writePlaylists(
+        sp: android.content.SharedPreferences,
+        key: String,
+        list: List<Playlist>
+    ) {
         val arr = JSONArray()
         list.forEach { playlist ->
             arr.put(
@@ -552,7 +626,7 @@ object LocalStore {
                     .put("items", JSONArray(playlist.items.map { entryToJson(it) }))
             )
         }
-        sp.edit().putString(KEY_PLAYLISTS, arr.toString()).apply()
+        sp.edit().putString(key, arr.toString()).apply()
     }
 
     private fun entryFromJson(o: JSONObject): VideoEntry = VideoEntry(

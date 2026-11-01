@@ -30,11 +30,13 @@ object VideoMenu {
         )
         menu.menu.add(0, ID_DOWNLOAD, 1, R.string.action_download)
         menu.menu.add(0, ID_QUEUE, 2, R.string.action_add_to_queue)
+        menu.menu.add(0, ID_PLAYLIST, 3, R.string.action_playlist)
         menu.setOnMenuItemClickListener { item ->
             when (item.itemId) {
                 ID_FAVORITE -> toggleFavorite(context, model)
                 ID_DOWNLOAD -> scope.launch { openDownload(context, model) }
                 ID_QUEUE -> enqueue(context, model)
+                ID_PLAYLIST -> PlaylistSheets.showAdd(context, model.toEntry(), music = false)
             }
             true
         }
@@ -76,4 +78,5 @@ object VideoMenu {
     private const val ID_FAVORITE = 1
     private const val ID_DOWNLOAD = 2
     private const val ID_QUEUE = 3
+    private const val ID_PLAYLIST = 4
 }

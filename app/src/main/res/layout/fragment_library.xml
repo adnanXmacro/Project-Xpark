@@ -76,5 +76,18 @@
             android:paddingEnd="32dp"
             android:textColor="@color/on_surface_variant"
             android:visibility="gone" />
+
+        <ImageButton
+            android:id="@+id/createPlaylistButton"
+            android:layout_width="56dp"
+            android:layout_height="56dp"
+            android:layout_gravity="bottom|end"
+            android:layout_marginEnd="16dp"
+            android:layout_marginBottom="24dp"
+            android:background="@drawable/bg_play_circle"
+            android:contentDescription="@string/cd_new_playlist"
+            android:src="@drawable/ic_add"
+            android:visibility="gone"
+            app:tint="@color/white" />
     </FrameLayout>
 </LinearLayout>

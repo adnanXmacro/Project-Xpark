@@ -56,6 +56,8 @@ import com.sparktube.app.player.PlayerControlState
 import com.sparktube.app.player.PlayerControlsOverlay
 import com.sparktube.app.ui.channel.ChannelActivity
 import com.sparktube.app.ui.common.CommentAdapter
+import com.sparktube.app.ui.common.PlaylistSheets
+import com.sparktube.app.ui.common.SleepTimerSheet
 import com.sparktube.app.ui.common.VideoAdapter
 import com.sparktube.app.ui.common.toQueueEntry
 import com.sparktube.app.ui.common.toUiModel
@@ -175,6 +177,8 @@ class PlayerActivity : AppCompatActivity() {
         override fun onNotice(message: String) {
             Toast.makeText(this@PlayerActivity, message, Toast.LENGTH_SHORT).show()
         }
+
+        override fun onSleepTimerChanged() = bindSleepIndicator()
     }
 
     private var loadedUrl: String? = null
@@ -754,6 +758,7 @@ class PlayerActivity : AppCompatActivity() {
                 playerOverlay.scheduleHide()
             }
         }
+        bindSleepIndicator()
         if (PlaybackCenter.hasMedia) {
             PlaybackCenter.player.playWhenReady = true
         }
@@ -1210,100 +1215,7 @@ class PlayerActivity : AppCompatActivity() {
      */
     private fun showPlaylistSheet() {
         val video = currentVideoEntry() ?: return
-        val sheet = BottomSheetDialog(this)
-        val root = sheetRoot()
-        root.addView(sheetTitle(getString(R.string.playlist_sheet_title)))
-
-        root.addView(
-            sheetRow("+ " + getString(R.string.new_playlist), selected = false) {
-                sheet.dismiss()
-                showNewPlaylistDialog()
-            }
-        )
-
-        val playlists = LocalStore.playlists(this)
-        if (playlists.isEmpty()) {
-            root.addView(hintRow(getString(R.string.playlist_sheet_empty)))
-        } else {
-            playlists.forEach { playlist ->
-                val added = playlist.items.any { it.url == video.url }
-                root.addView(
-                    sheetMenuRow(
-                        playlist.name,
-                        if (added) getString(R.string.playlist_added) else ""
-                    ) {
-                        if (added) {
-                            LocalStore.removeFromPlaylist(this, playlist.id, video.url)
-                            Toast.makeText(
-                                this,
-                                getString(R.string.removed_from_playlist_fmt, playlist.name),
-                                Toast.LENGTH_SHORT
-                            ).show()
-                        } else {
-                            LocalStore.addToPlaylist(this, playlist.id, video)
-                            Toast.makeText(
-                                this,
-                                getString(R.string.saved_to_playlist_fmt, playlist.name),
-                                Toast.LENGTH_SHORT
-                            ).show()
-                        }
-                        sheet.dismiss()
-                    }
-                )
-            }
-        }
-
-        showSheet(sheet, root, peekDp = 380)
-    }
-
-    /** Name input dialog that creates a playlist and saves the video into it. */
-    private fun showNewPlaylistDialog() {
-        val video = currentVideoEntry() ?: return
-        val input = android.widget.EditText(this).apply {
-            hint = getString(R.string.new_playlist_hint)
-            setSingleLine()
-        }
-        val container = android.widget.FrameLayout(this).apply {
-            setPadding(dp(24), dp(8), dp(24), 0)
-            addView(input)
-        }
-        AlertDialog.Builder(this)
-            .setTitle(R.string.new_playlist)
-            .setView(container)
-            .setPositiveButton(R.string.create_playlist) { _, _ ->
-                val name = input.text.toString().trim()
-                when {
-                    name.isEmpty() -> Toast.makeText(
-                        this, R.string.playlist_name_empty, Toast.LENGTH_SHORT
-                    ).show()
-
-                    else -> {
-                        val created = LocalStore.createPlaylist(this, name)
-                        if (created == null) {
-                            Toast.makeText(
-                                this, R.string.playlist_name_exists, Toast.LENGTH_SHORT
-                            ).show()
-                        } else {
-                            LocalStore.addToPlaylist(this, created.id, video)
-                            Toast.makeText(
-                                this,
-                                getString(R.string.saved_to_playlist_fmt, name),
-                                Toast.LENGTH_SHORT
-                            ).show()
-                        }
-                    }
-                }
-            }
-            .setNegativeButton(android.R.string.cancel, null)
-            .show()
-    }
-
-    /** Small dim helper line used inside bottom sheets. */
-    private fun hintRow(text: String): TextView = TextView(this).apply {
-        this.text = text
-        textSize = 13f
-        setPadding(dp(4), dp(10), dp(4), dp(6))
-        setTextColor(getColor(R.color.on_surface_variant))
+        PlaylistSheets.showAdd(this, video, music = false)
     }
 
     private fun updateDownloadUi() {
@@ -1339,6 +1251,7 @@ class PlayerActivity : AppCompatActivity() {
                     DownloadCenter.refreshStatuses(this@PlayerActivity)
                 }
                 updateDownloadUi()
+                bindSleepIndicator()
             }
             downloadHandler.postDelayed(this, 1000)
         }
@@ -1559,8 +1472,32 @@ class PlayerActivity : AppCompatActivity() {
                 )
             }
         )
+        root.addView(
+            sheetMenuRow(getString(R.string.sleep_timer), sleepTimerSummary()) {
+                sheet.dismiss()
+                SleepTimerSheet(this).show()
+            }
+        )
 
-        showSheet(sheet, root, peekDp = 320)
+        showSheet(sheet, root, peekDp = 360)
+    }
+
+    private fun sleepTimerSummary(): String {
+        if (!PlaybackCenter.isSleepTimerActive) return getString(R.string.sleep_timer_off)
+        val ms = PlaybackCenter.sleepTimerRemainingMs
+        val minutes = (ms / 60_000L).toInt()
+        return if (minutes >= 1) {
+            getString(R.string.sleep_timer_remaining_fmt, minutes)
+        } else {
+            getString(R.string.sleep_timer_remaining_sec_fmt, (ms / 1000L).toInt().coerceAtLeast(1))
+        }
+    }
+
+    private fun bindSleepIndicator() {
+        if (!::binding.isInitialized || isFinishing) return
+        val active = PlaybackCenter.isSleepTimerActive
+        binding.sleepIndicator.isVisible = active
+        if (active) binding.sleepIndicator.text = sleepTimerSummary()
     }
 
     private fun qualitySummary(catalog: StreamCatalog): String {

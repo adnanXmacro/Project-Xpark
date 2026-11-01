@@ -194,6 +194,9 @@ object PlaybackCenter {
 
         /** Short user-facing hint ("switched to the default audio track", …). */
         fun onNotice(message: String) {}
+
+        /** Sleep timer was set, cancelled, or expired. */
+        fun onSleepTimerChanged() {}
     }
 
     lateinit var appContext: Context
@@ -652,6 +655,10 @@ object PlaybackCenter {
         }
     }
 
+    fun pause() {
+        playerRef?.pause()
+    }
+
     fun seekTo(positionMs: Long) {
         playerRef?.seekTo(positionMs.coerceIn(0, durationMs))
     }
@@ -819,6 +826,44 @@ object PlaybackCenter {
         }
     }
 
+    // ----- Sleep timer (queue keeps advancing until the deadline, then pause) -----
+
+    private var sleepTimerJob: Job? = null
+    private var sleepTimerDeadline = 0L
+
+    val isSleepTimerActive: Boolean
+        get() = sleepTimerDeadline > 0L && SystemClock.elapsedRealtime() < sleepTimerDeadline
+
+    val sleepTimerRemainingMs: Long
+        get() = (sleepTimerDeadline - SystemClock.elapsedRealtime()).coerceAtLeast(0L)
+
+    /**
+     * Starts a sleep timer of [minutes] (replaces any previous one).
+     * Pass 0 or less to cancel. Independent of the music loop timer.
+     */
+    fun setSleepTimer(minutes: Int) {
+        sleepTimerJob?.cancel()
+        sleepTimerJob = null
+        if (minutes <= 0) {
+            sleepTimerDeadline = 0L
+            notify { it.onSleepTimerChanged() }
+            return
+        }
+        val durationMs = minutes * 60_000L
+        sleepTimerDeadline = SystemClock.elapsedRealtime() + durationMs
+        sleepTimerJob = scope.launch {
+            delay(durationMs)
+            if (SystemClock.elapsedRealtime() >= sleepTimerDeadline && sleepTimerDeadline > 0L) {
+                sleepTimerDeadline = 0L
+                playerRef?.pause()
+                notify { it.onSleepTimerChanged() }
+            }
+        }
+        notify { it.onSleepTimerChanged() }
+    }
+
+    fun clearSleepTimer() = setSleepTimer(0)
+
     fun next() {
         when (mode) {
             Mode.AUDIO -> playerRef?.run {
@@ -857,6 +902,10 @@ object PlaybackCenter {
         loopTimerJob = null
         loopRemaining = 0
         loopTimerDeadline = 0L
+        sleepTimerJob?.cancel()
+        sleepTimerJob = null
+        sleepTimerDeadline = 0L
+        notify { it.onSleepTimerChanged() }
         pendingMusic.clear()
         playerRef?.run {
             stop()
