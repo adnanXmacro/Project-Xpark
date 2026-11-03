@@ -9,6 +9,7 @@ import androidx.appcompat.app.AppCompatActivity
 import com.sparktube.app.R
 import com.sparktube.app.data.LocalStore
 import com.sparktube.app.data.VideoEntry
+import com.sparktube.app.util.PlaylistHydrator
 import com.sparktube.app.util.PlaylistShare
 import com.sparktube.app.util.Themes
 
@@ -60,12 +61,13 @@ class PlaylistImportActivity : AppCompatActivity() {
                         url = PlaylistShare.watchUrl(id),
                         title = id,
                         uploader = "",
-                        thumbnailUrl = "",
+                        thumbnailUrl = PlaylistShare.thumbUrl(id),
                         durationSec = 0L,
                         isMusic = true
                     )
                 )
             }
+            PlaylistHydrator.start(context, playlist.id)
             return LocalStore.musicPlaylist(context, playlist.id) ?: playlist
         }
     }

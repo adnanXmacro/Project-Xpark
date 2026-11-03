@@ -1,6 +1,7 @@
 package com.sparktube.app.data
 
 import android.content.Context
+import com.sparktube.app.util.YoutubeLinks
 import org.json.JSONArray
 import org.json.JSONObject
 
@@ -114,8 +115,8 @@ object LocalStore {
     fun addToMusicHistory(context: Context, entry: VideoEntry) {
         val ctx = context.applicationContext
         val list = musicHistory(ctx).toMutableList()
-        list.removeAll { it.url == entry.url }
-        list.add(0, entry)
+        list.removeAll { sameVideo(it.url, entry.url) }
+        list.add(0, entry.copy(isMusic = true))
         while (list.size > MAX_HISTORY) {
             list.removeAt(list.size - 1)
         }
@@ -398,6 +399,48 @@ object LocalStore {
 
     fun removeFromMusicPlaylist(context: Context, id: Long, url: String): Boolean =
         removeFromPlaylistIn(context, KEY_MUSIC_PLAYLISTS, id, url)
+
+    fun updateMusicPlaylistItem(context: Context, id: Long, entry: VideoEntry): Boolean {
+        val ctx = context.applicationContext
+        val sp = prefs(ctx)
+        val list = readPlaylists(sp, KEY_MUSIC_PLAYLISTS).toMutableList()
+        val idx = list.indexOfFirst { it.id == id }
+        if (idx < 0) return false
+        val target = list[idx]
+        val itemIdx = target.items.indexOfFirst { sameVideo(it.url, entry.url) }
+        if (itemIdx < 0) return false
+        val items = target.items.toMutableList()
+        items[itemIdx] = entry.copy(url = items[itemIdx].url, isMusic = true)
+        list[idx] = target.copy(items = items)
+        writePlaylists(sp, KEY_MUSIC_PLAYLISTS, list)
+        return true
+    }
+
+    fun updateMusicHistoryItem(context: Context, entry: VideoEntry) {
+        val ctx = context.applicationContext
+        val list = musicHistory(ctx).toMutableList()
+        val idx = list.indexOfFirst { sameVideo(it.url, entry.url) }
+        if (idx < 0) return
+        list[idx] = entry.copy(url = list[idx].url, isMusic = true)
+        write(prefs(ctx), KEY_MUSIC_HISTORY, list)
+    }
+
+    fun updateMusicItemEverywhere(context: Context, entry: VideoEntry) {
+        val filled = entry.copy(isMusic = true)
+        updateMusicHistoryItem(context, filled)
+        musicPlaylists(context).forEach { playlist ->
+            if (playlist.items.any { sameVideo(it.url, filled.url) }) {
+                updateMusicPlaylistItem(context, playlist.id, filled)
+            }
+        }
+    }
+
+    private fun sameVideo(a: String, b: String): Boolean {
+        if (a == b) return true
+        val idA = YoutubeLinks.videoIdFromUrl(a) ?: return false
+        val idB = YoutubeLinks.videoIdFromUrl(b) ?: return false
+        return idA == idB
+    }
 
     private fun createPlaylistIn(context: Context, key: String, name: String): Playlist? {
         val clean = name.trim()

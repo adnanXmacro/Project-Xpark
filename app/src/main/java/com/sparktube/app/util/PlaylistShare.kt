@@ -55,4 +55,6 @@ object PlaylistShare {
     }
 
     fun watchUrl(id: String): String = "https://www.youtube.com/watch?v=$id"
+
+    fun thumbUrl(id: String): String = "https://i.ytimg.com/vi/$id/hqdefault.jpg"
 }

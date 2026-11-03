@@ -24,9 +24,12 @@ import com.sparktube.app.ui.common.PlaylistSheets
 import com.sparktube.app.ui.common.VideoUiModel
 import com.sparktube.app.ui.common.toQueueEntry
 import com.sparktube.app.ui.common.toUiModel
+import com.sparktube.app.util.PlaylistHydrator
 import com.sparktube.app.util.SdPackage
 import com.sparktube.app.util.Themes
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 class MusicPlaylistActivity : AppCompatActivity() {
 
@@ -34,6 +37,7 @@ class MusicPlaylistActivity : AppCompatActivity() {
     private lateinit var adapter: MusicRowAdapter
     private var playlistId = -1L
     private var songs: List<VideoUiModel> = emptyList()
+    private var hydrateJob: kotlinx.coroutines.Job? = null
 
     private val treePicker = registerForActivityResult(ActivityResultContracts.OpenDocumentTree()) { uri ->
         if (uri == null) return@registerForActivityResult
@@ -92,6 +96,16 @@ class MusicPlaylistActivity : AppCompatActivity() {
         )
         binding.emptyView.setText(R.string.empty_playlist_songs)
         binding.emptyView.isVisible = songs.isEmpty()
+        if (hydrateJob?.isActive != true &&
+            playlist.items.any { PlaylistHydrator.needsHydrate(it.title, it.url) }
+        ) {
+            hydrateJob = lifecycleScope.launch {
+                val changed = withContext(Dispatchers.IO) {
+                    PlaylistHydrator.hydrate(this@MusicPlaylistActivity, playlistId)
+                }
+                if (changed && !isFinishing) reload()
+            }
+        }
     }
 
     private fun showMore() {

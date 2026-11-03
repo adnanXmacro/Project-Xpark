@@ -37,6 +37,7 @@ import com.sparktube.app.download.DownloadCenter
 import com.sparktube.app.net.OkHttpDownloader
 import com.sparktube.app.net.ParallelRangeDataSource
 import com.sparktube.app.util.AppPrefs
+import com.sparktube.app.util.PlaylistHydrator
 import com.google.common.util.concurrent.ListenableFuture
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
@@ -602,8 +603,8 @@ object PlaybackCenter {
                         throw LiveContentException()
                     }
                     catalog = StreamCatalog(info)
-                    LocalStore.addToMusicHistory(appContext, first.toVideoEntry())
-                    RecommendEngine.logPlay(appContext, first.url, first.title, first.uploader)
+                    val filled = applyResolvedMetadata(info)
+                    RecommendEngine.logPlay(appContext, first.url, filled.title, filled.uploader)
                     // Prime the audio URL cache: the first song then starts instantly.
                     primeMusicUri(first)
                     startMusicPlaylistWithRelated()
@@ -1063,6 +1064,30 @@ object PlaybackCenter {
         notify { it.onItemChanged(currentEntry) }
     }
 
+    private fun applyResolvedMetadata(info: StreamInfo): QueueEntry {
+        val current = currentEntry ?: return QueueEntry(
+            url = info.url.orEmpty(),
+            title = info.name.orEmpty(),
+            uploader = info.uploaderName.orEmpty(),
+            thumbnailUrl = info.thumbnails.maxByOrNull { it.height }?.url.orEmpty(),
+            durationSec = info.duration,
+            isMusic = mode == Mode.AUDIO
+        )
+        val filled = PlaylistHydrator.fromStream(current.toVideoEntry(), info)
+        val idx = queueIndex
+        if (idx in queue.indices && queue[idx].url == current.url) {
+            queue[idx] = current.copy(
+                title = filled.title,
+                uploader = filled.uploader,
+                thumbnailUrl = filled.thumbnailUrl,
+                durationSec = filled.durationSec
+            )
+        }
+        LocalStore.addToMusicHistory(appContext, filled)
+        LocalStore.updateMusicItemEverywhere(appContext, filled)
+        return queue.getOrNull(idx) ?: current
+    }
+
     private fun initFromApp() {
         if (this::appContext.isInitialized) return
         throw IllegalStateException("PlaybackCenter.init(context) must be called in Application.onCreate()")
@@ -1167,8 +1192,8 @@ object PlaybackCenter {
                     throw LiveContentException()
                 }
                 catalog = StreamCatalog(info)
-                LocalStore.addToMusicHistory(appContext, entry.toVideoEntry())
-                RecommendEngine.logPlay(appContext, entry.url, entry.title, entry.uploader)
+                val filled = applyResolvedMetadata(info)
+                RecommendEngine.logPlay(appContext, entry.url, filled.title, filled.uploader)
                 // Share the resolved URL with the loading thread (if it has
                 // not found it already) so a re-visit starts instantly.
                 primeMusicUri(entry)

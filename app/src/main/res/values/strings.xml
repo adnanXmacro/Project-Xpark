@@ -540,6 +540,7 @@
     <string name="sd_card_gone">SD card removed. Those songs will stream if they still can.</string>
     <string name="sd_adopted_warning">This card is adopted by this phone. Another device will not see the files.</string>
     <string name="quick_picks_refresh_failed">Could not refresh Quick picks</string>
+    <string name="changelog_1213_fixed_share_names">Shared playlist songs now show their real names and album art instead of YouTube IDs.</string>
     <string name="changelog_1212_added_share">Share a music playlist as a QR code or Open Tube link so another phone can import it.</string>
     <string name="changelog_1212_added_sd">Export a music playlist to an SD card: playable files for a pocket MP3 player, or an Open Tube package another phone can load.</string>
     <string name="changelog_1212_improved_picks">Pull to refresh Quick picks for a new mix of charts, recents, favorites and your artists.</string>

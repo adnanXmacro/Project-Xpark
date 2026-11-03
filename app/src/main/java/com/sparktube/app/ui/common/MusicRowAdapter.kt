@@ -21,7 +21,11 @@ class MusicRowAdapter(
                 a.url == b.url
 
             override fun areContentsTheSame(a: VideoUiModel, b: VideoUiModel): Boolean =
-                a.url == b.url && a.title == b.title
+                a.url == b.url &&
+                    a.title == b.title &&
+                    a.uploader == b.uploader &&
+                    a.thumbnailUrl == b.thumbnailUrl &&
+                    a.durationSec == b.durationSec
         }
     }
 

@@ -24,6 +24,7 @@ import androidx.lifecycle.lifecycleScope
 import com.sparktube.app.R
 import com.sparktube.app.data.ArtistEntry
 import com.sparktube.app.data.LocalStore
+import com.sparktube.app.data.VideoEntry
 import com.sparktube.app.data.YtRepository
 import com.sparktube.app.databinding.FragmentMusicBinding
 import com.sparktube.app.playback.PlaybackCenter
@@ -36,6 +37,7 @@ import com.sparktube.app.ui.common.toUiModel
 import com.sparktube.app.ui.search.SearchActivity
 import com.sparktube.app.util.AppPrefs
 import com.sparktube.app.util.Formatters
+import com.sparktube.app.util.PlaylistHydrator
 import com.sparktube.app.util.Thumbs
 import com.sparktube.app.util.YoutubeLinks
 import kotlinx.coroutines.launch
@@ -229,10 +231,11 @@ class MusicFragment : Fragment() {
     private fun pickQuickPicks(charts: List<VideoUiModel>): List<VideoUiModel> {
         val ctx = requireContext()
         val lastShown = AppPrefs.quickPickLastShown.toSet()
-        val byUrl = linkedMapOf<String, VideoUiModel>()
+        val byId = linkedMapOf<String, VideoUiModel>()
         fun add(model: VideoUiModel) {
-            if (model.url.isBlank()) return
-            byUrl.putIfAbsent(model.url, model)
+            val id = YoutubeLinks.videoIdFromUrl(model.url) ?: return
+            if (PlaylistHydrator.needsHydrate(model.title, model.url)) return
+            byId.putIfAbsent(id, model)
         }
         charts.forEach(::add)
         LocalStore.musicHistory(ctx).forEach { add(it.toUiModel()) }
@@ -241,12 +244,13 @@ class MusicFragment : Fragment() {
         if (artists.isNotEmpty()) {
             charts.filter { it.uploader.lowercase() in artists }.forEach(::add)
         }
-        val fresh = byUrl.values.filter { YoutubeLinks.videoIdFromUrl(it.url) !in lastShown }.shuffled()
+        val fresh = byId.values.filter { YoutubeLinks.videoIdFromUrl(it.url) !in lastShown }.shuffled()
         val picked = fresh.take(8).toMutableList()
         if (picked.size < 8) {
             charts.forEach { model ->
                 if (picked.size >= 8) return@forEach
-                if (picked.none { it.url == model.url }) picked += model
+                val id = YoutubeLinks.videoIdFromUrl(model.url)
+                if (picked.none { YoutubeLinks.videoIdFromUrl(it.url) == id }) picked += model
             }
         }
         val ids = picked.mapNotNull { YoutubeLinks.videoIdFromUrl(it.url) }
@@ -257,13 +261,15 @@ class MusicFragment : Fragment() {
     private fun bindMixes(b: FragmentMusicBinding, models: List<VideoUiModel>) {
         val ctx = requireContext()
         val cards = mutableListOf<Pair<String, List<VideoUiModel>>>()
-        val favs = LocalStore.musicFavorites(ctx)
+        fun named(entries: List<VideoEntry>) =
+            entries.map { it.toUiModel() }.filter { !PlaylistHydrator.needsHydrate(it.title, it.url) }
+        val favs = named(LocalStore.musicFavorites(ctx))
         if (favs.isNotEmpty()) {
-            cards += getString(R.string.music_mix_favorites) to favs.map { it.toUiModel() }
+            cards += getString(R.string.music_mix_favorites) to favs
         }
-        val recents = LocalStore.musicHistory(ctx)
+        val recents = named(LocalStore.musicHistory(ctx))
         if (recents.isNotEmpty()) {
-            cards += getString(R.string.music_mix_recents) to recents.map { it.toUiModel() }
+            cards += getString(R.string.music_mix_recents) to recents
         }
         LocalStore.favoriteArtists(ctx).take(3).forEach { artist ->
             val songs = models.filter { it.uploader.equals(artist.name, ignoreCase = true) }
