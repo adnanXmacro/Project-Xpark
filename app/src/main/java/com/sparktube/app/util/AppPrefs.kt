@@ -19,6 +19,7 @@ object AppPrefs {
     private const val KEY_ANIMATIONS = "animations"
     private const val KEY_OPEN_YOUTUBE_LINKS_HINT = "open_youtube_links_hint_shown_v128"
     private const val KEY_TOTAL_BYTES_DOWNLOADED = "total_bytes_downloaded"
+    private const val KEY_QUICK_PICK_LAST_SHOWN = "quick_pick_last_shown"
 
     // Default video quality: separate values for Wi-Fi and mobile data.
     private const val KEY_DEFAULT_VIDEO_HEIGHT_WIFI = "default_video_height_wifi"
@@ -223,6 +224,19 @@ object AppPrefs {
     fun addBytesDownloaded(bytes: Long) {
         if (bytes <= 0L) return
         totalBytesDownloaded = totalBytesDownloaded + bytes
+    }
+
+    var quickPickLastShown: List<String>
+        get() = sp.getString(KEY_QUICK_PICK_LAST_SHOWN, null)
+            ?.split(',')
+            ?.filter { it.isNotBlank() }
+            .orEmpty()
+        set(value) {
+            sp.edit().putString(KEY_QUICK_PICK_LAST_SHOWN, value.takeLast(16).joinToString(",")).apply()
+        }
+
+    fun recordQuickPicks(ids: List<String>) {
+        quickPickLastShown = (quickPickLastShown + ids.filter { it.isNotBlank() }).takeLast(16)
     }
 
     /** Fullscreen video scale preference: fit / crop / stretch (default: fit). */

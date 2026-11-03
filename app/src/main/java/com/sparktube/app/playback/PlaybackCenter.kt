@@ -1674,6 +1674,9 @@ object PlaybackCenter {
         // Fast path: already resolved (also covers repeat calls for the
         // same item — retries, buffering re-opens, etc).
         musicUriCache[entry.url]?.let { return it }
+        DownloadCenter.localAudioFile(appContext, entry.url)?.let { file ->
+            return cacheMusicUri(entry.url, Uri.fromFile(file).toString())
+        }
         val info = runBlocking { YtRepository.streamInfo(entry.url) }
         if (LiveFilter.isLive(info)) {
             throw LiveContentException()

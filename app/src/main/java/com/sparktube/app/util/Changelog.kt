@@ -80,6 +80,21 @@ object Changelog {
      */
     fun fallback(context: Context, version: String): List<ChangelogSection> {
         val v = version.removePrefix("v").removePrefix("V")
+        if (v == "1.2.12") {
+            return listOf(
+                ChangelogSection(
+                    context.getString(R.string.update_section_added),
+                    listOf(
+                        context.getString(R.string.changelog_1212_added_share),
+                        context.getString(R.string.changelog_1212_added_sd)
+                    )
+                ),
+                ChangelogSection(
+                    context.getString(R.string.update_section_improved),
+                    listOf(context.getString(R.string.changelog_1212_improved_picks))
+                )
+            )
+        }
         if (v == "1.2.11") {
             return listOf(
                 ChangelogSection(

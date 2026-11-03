@@ -378,6 +378,15 @@ object LocalStore {
     fun createMusicPlaylist(context: Context, name: String): Playlist? =
         createPlaylistIn(context, KEY_MUSIC_PLAYLISTS, name)
 
+    fun uniqueMusicPlaylistName(context: Context, desired: String): String {
+        val base = desired.trim().ifEmpty { "Playlist" }
+        val existing = musicPlaylists(context).map { it.name.lowercase() }.toSet()
+        if (base.lowercase() !in existing) return base
+        var n = 2
+        while ("$base ($n)".lowercase() in existing) n++
+        return "$base ($n)"
+    }
+
     fun deleteMusicPlaylist(context: Context, id: Long) =
         deletePlaylistIn(context, KEY_MUSIC_PLAYLISTS, id)
 

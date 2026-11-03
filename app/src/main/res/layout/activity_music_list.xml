@@ -34,6 +34,16 @@
             android:textColor="@color/on_surface"
             android:textSize="22sp"
             android:textStyle="bold" />
+
+        <ImageButton
+            android:id="@+id/moreButton"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:contentDescription="@string/scan_playlist"
+            android:src="@drawable/ic_more_vert"
+            android:visibility="gone"
+            app:tint="@color/on_surface" />
     </LinearLayout>
 
     <!-- Song count + Play all -->

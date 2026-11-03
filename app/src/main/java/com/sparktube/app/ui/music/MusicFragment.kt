@@ -37,6 +37,7 @@ import com.sparktube.app.ui.search.SearchActivity
 import com.sparktube.app.util.AppPrefs
 import com.sparktube.app.util.Formatters
 import com.sparktube.app.util.Thumbs
+import com.sparktube.app.util.YoutubeLinks
 import kotlinx.coroutines.launch
 
 private data class Genre(val label: String, val query: String?, val top: Int, val bottom: Int)
@@ -82,6 +83,7 @@ class MusicFragment : Fragment() {
             ArtistPickerActivity.start(requireContext())
         }
         binding.playAllButton.setOnClickListener { playAllQuickPicks() }
+        binding.swipe.setOnRefreshListener { load() }
 
         buildMoodChips()
         buildGenreTiles()
@@ -111,9 +113,10 @@ class MusicFragment : Fragment() {
     private fun load() {
         loadJob?.cancel()
         val b = _binding ?: return
+        val hadContent = quickPicks.isNotEmpty()
         loadJob = viewLifecycleOwner.lifecycleScope.launch {
             b.errorView.isVisible = false
-            showMusicSkeleton(b)
+            if (!hadContent) showMusicSkeleton(b)
             try {
                 val result = YtRepository.musicTrending(AppPrefs.countryOrDefault)
                 val models = result.items.map { it.toUiModel() }
@@ -122,9 +125,15 @@ class MusicFragment : Fragment() {
             } catch (e: kotlinx.coroutines.CancellationException) {
                 throw e
             } catch (e: Exception) {
-                clearMusicSkeleton(b)
-                b.errorText.text = Formatters.friendlyException(e)
-                b.errorView.isVisible = true
+                if (hadContent) {
+                    Toast.makeText(requireContext(), R.string.quick_picks_refresh_failed, Toast.LENGTH_SHORT).show()
+                } else {
+                    clearMusicSkeleton(b)
+                    b.errorText.text = Formatters.friendlyException(e)
+                    b.errorView.isVisible = true
+                }
+            } finally {
+                b.swipe.isRefreshing = false
             }
         }
     }
@@ -164,7 +173,7 @@ class MusicFragment : Fragment() {
     }
 
     private fun bindHome(b: FragmentMusicBinding, models: List<VideoUiModel>) {
-        quickPicks = models.take(8)
+        quickPicks = pickQuickPicks(models)
         b.quickPicksHeader.isVisible = quickPicks.isNotEmpty()
         b.quickPicksList.removeAllViews()
         quickPicks.forEachIndexed { index, model ->
@@ -215,6 +224,34 @@ class MusicFragment : Fragment() {
             }
             b.popularList.addView(row)
         }
+    }
+
+    private fun pickQuickPicks(charts: List<VideoUiModel>): List<VideoUiModel> {
+        val ctx = requireContext()
+        val lastShown = AppPrefs.quickPickLastShown.toSet()
+        val byUrl = linkedMapOf<String, VideoUiModel>()
+        fun add(model: VideoUiModel) {
+            if (model.url.isBlank()) return
+            byUrl.putIfAbsent(model.url, model)
+        }
+        charts.forEach(::add)
+        LocalStore.musicHistory(ctx).forEach { add(it.toUiModel()) }
+        LocalStore.musicFavorites(ctx).forEach { add(it.toUiModel()) }
+        val artists = LocalStore.favoriteArtists(ctx).map { it.name.lowercase() }.toSet()
+        if (artists.isNotEmpty()) {
+            charts.filter { it.uploader.lowercase() in artists }.forEach(::add)
+        }
+        val fresh = byUrl.values.filter { YoutubeLinks.videoIdFromUrl(it.url) !in lastShown }.shuffled()
+        val picked = fresh.take(8).toMutableList()
+        if (picked.size < 8) {
+            charts.forEach { model ->
+                if (picked.size >= 8) return@forEach
+                if (picked.none { it.url == model.url }) picked += model
+            }
+        }
+        val ids = picked.mapNotNull { YoutubeLinks.videoIdFromUrl(it.url) }
+        AppPrefs.recordQuickPicks(ids)
+        return picked
     }
 
     private fun bindMixes(b: FragmentMusicBinding, models: List<VideoUiModel>) {
@@ -404,7 +441,7 @@ class MusicFragment : Fragment() {
                 )
                 setOnClickListener {
                     if (genre.query == null) {
-                        binding.root.smoothScrollTo(0, 0)
+                        binding.scroll.smoothScrollTo(0, 0)
                         load()
                     } else {
                         startActivity(

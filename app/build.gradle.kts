@@ -16,8 +16,8 @@ android {
         applicationId = "com.opentubebyproadnan.app"
         minSdk = 24
         targetSdk = 34
-        versionCode = 24
-        versionName = "1.2.11"
+        versionCode = 25
+        versionName = "1.2.12"
     }
 
     val envKeystoreFile = System.getenv("ANDROID_KEYSTORE_FILE")
@@ -96,6 +96,7 @@ dependencies {
     implementation("androidx.constraintlayout:constraintlayout:2.1.4")
     implementation("androidx.recyclerview:recyclerview:1.3.2")
     implementation("androidx.swiperefreshlayout:swiperefreshlayout:1.1.0")
+    implementation("androidx.documentfile:documentfile:1.0.1")
     implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.8.4")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.8.1")
 
@@ -124,6 +125,8 @@ dependencies {
 
     // Image loading
     implementation("io.coil-kt:coil:2.6.0")
+    implementation("com.google.zxing:core:3.5.3")
+    implementation("com.journeyapps:zxing-android-embedded:4.3.0")
 
     // Playback
     implementation("androidx.media3:media3-exoplayer:$media3Version")

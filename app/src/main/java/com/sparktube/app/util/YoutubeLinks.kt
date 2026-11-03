@@ -22,6 +22,14 @@ object YoutubeLinks {
         "www.youtube-nocookie.com"
     )
 
+    fun videoIdFromUrl(raw: String?): String? {
+        if (raw.isNullOrBlank()) return null
+        val trimmed = raw.trim()
+        validId(trimmed)?.let { return it }
+        val uri = runCatching { Uri.parse(trimmed) }.getOrNull() ?: return null
+        return videoIdFrom(uri)
+    }
+
     fun videoUrlFrom(raw: String?): String? {
         if (raw.isNullOrBlank()) return null
         val trimmed = raw.trim()

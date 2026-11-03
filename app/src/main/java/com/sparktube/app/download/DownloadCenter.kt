@@ -1,6 +1,7 @@
 package com.sparktube.app.download
 
 import android.content.Context
+import android.net.Uri
 import android.os.Handler
 import android.os.Looper
 import android.util.Log
@@ -96,10 +97,86 @@ object DownloadCenter {
 
     private var appCtx: Context? = null
 
+    data class SdPlayRef(val packageUri: Uri, val zipPath: String, val playlistId: Long)
+
+    private val sdPlay = ConcurrentHashMap<String, SdPlayRef>()
+
     /** All registry records belonging to one video page. */
     fun recordsFor(context: Context, videoUrl: String): List<DownloadRecord> {
         val id = videoIdOf(videoUrl)
         return LocalStore.downloads(context).filter { it.videoId == id }
+    }
+
+    /** Finished AUDIO file on disk, if any. */
+    fun doneAudioFile(context: Context, videoUrl: String): File? {
+        val record = recordsFor(context, videoUrl).firstOrNull {
+            it.type == TYPE_AUDIO && it.status == STATUS_DONE && it.filePaths.isNotEmpty()
+        } ?: return null
+        val file = File(record.filePaths.first())
+        return file.takeIf { it.isFile && it.length() > 0L }
+    }
+
+    fun setSdPlay(url: String, ref: SdPlayRef) {
+        sdPlay[url] = ref
+    }
+
+    fun clearSdPlay(playlistId: Long) {
+        sdPlay.keys.filter { sdPlay[it]?.playlistId == playlistId }.forEach { sdPlay.remove(it) }
+    }
+
+    fun pruneMissingSd(context: Context): Boolean {
+        var removed = false
+        sdPlay.entries.toList().forEach { (url, ref) ->
+            val ok = runCatching {
+                context.contentResolver.openInputStream(ref.packageUri)?.close()
+                true
+            }.getOrDefault(false)
+            if (!ok) {
+                sdPlay.remove(url)
+                removed = true
+            }
+        }
+        return removed
+    }
+
+    fun localAudioFile(context: Context, videoUrl: String): File? {
+        doneAudioFile(context, videoUrl)?.let { return it }
+        val ref = sdPlay[videoUrl] ?: return null
+        val dest = File(
+            File(context.cacheDir, "sdplay/${ref.playlistId}"),
+            "${videoIdOf(videoUrl)}.m4a"
+        )
+        if (dest.isFile && dest.length() > 0L) return dest
+        return if (com.sparktube.app.util.SdPackage.extractEntry(context, ref.packageUri, ref.zipPath, dest)) dest else null
+    }
+
+    fun registerImportedAudio(
+        context: Context,
+        videoUrl: String,
+        title: String,
+        uploader: String,
+        thumbUrl: String,
+        source: File
+    ) {
+        if (!source.isFile) return
+        val videoId = videoIdOf(videoUrl)
+        val dest = File(destinationPath(context, "${videoId}_AUDIO_import.m4a", TYPE_AUDIO))
+        dest.parentFile?.mkdirs()
+        source.copyTo(dest, overwrite = true)
+        LocalStore.addDownload(
+            context,
+            DownloadRecord(
+                videoId = videoId,
+                title = title,
+                uploader = uploader,
+                thumbnailUrl = thumbUrl,
+                type = TYPE_AUDIO,
+                quality = "import",
+                status = STATUS_DONE,
+                filePaths = listOf(dest.absolutePath),
+                downloadIds = emptyList()
+            )
+        )
     }
 
     /** Whether the video page should show "Downloaded" instead of the option. */
