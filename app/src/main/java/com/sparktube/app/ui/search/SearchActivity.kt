@@ -23,6 +23,7 @@ import com.sparktube.app.playback.PlaybackCenter
 import com.sparktube.app.ui.channel.ChannelActivity
 import com.sparktube.app.ui.common.ChannelRowAdapter
 import com.sparktube.app.ui.common.MusicRowAdapter
+import com.sparktube.app.ui.common.MusicSongMenu
 import com.sparktube.app.ui.common.SkeletonAdapter
 import com.sparktube.app.ui.common.SuggestionAdapter
 import com.sparktube.app.ui.common.SuggestionRow
@@ -286,31 +287,7 @@ class SearchActivity : AppCompatActivity() {
     }
 
     private fun showMusicMore(anchor: android.view.View, model: VideoUiModel) {
-        if (model.uploader.isBlank()) return
-        val menu = android.widget.PopupMenu(this, anchor)
-        val starred = LocalStore.isFavoriteArtist(this, model.uploader)
-        menu.menu.add(
-            0,
-            1,
-            0,
-            if (starred) R.string.artist_unstar else R.string.artist_star
-        )
-        menu.setOnMenuItemClickListener {
-            val now = LocalStore.toggleFavoriteArtist(
-                this,
-                com.sparktube.app.data.ArtistEntry(
-                    name = model.uploader,
-                    avatarUrl = model.uploaderAvatarUrl.ifBlank { model.thumbnailUrl }
-                )
-            )
-            android.widget.Toast.makeText(
-                this,
-                if (now) R.string.artist_added else R.string.artist_removed,
-                android.widget.Toast.LENGTH_SHORT
-            ).show()
-            true
-        }
-        menu.show()
+        MusicSongMenu.show(anchor, model, starArtist = true)
     }
 
     private fun itemCount(): Int = when {

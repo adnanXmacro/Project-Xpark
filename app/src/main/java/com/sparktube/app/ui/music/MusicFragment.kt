@@ -15,23 +15,20 @@ import android.widget.GridLayout
 import android.widget.ImageButton
 import android.widget.ImageView
 import android.widget.LinearLayout
-import android.widget.PopupMenu
 import android.widget.TextView
 import android.widget.Toast
 import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
 import com.sparktube.app.R
-import com.sparktube.app.data.ArtistEntry
 import com.sparktube.app.data.LocalStore
 import com.sparktube.app.data.VideoEntry
 import com.sparktube.app.data.YtRepository
 import com.sparktube.app.databinding.FragmentMusicBinding
 import com.sparktube.app.playback.PlaybackCenter
-import com.sparktube.app.ui.common.PlaylistSheets
+import com.sparktube.app.ui.common.MusicSongMenu
 import com.sparktube.app.ui.common.SkeletonPulse
 import com.sparktube.app.ui.common.VideoUiModel
-import com.sparktube.app.ui.common.toEntry
 import com.sparktube.app.ui.common.toQueueEntry
 import com.sparktube.app.ui.common.toUiModel
 import com.sparktube.app.ui.search.SearchActivity
@@ -327,51 +324,15 @@ class MusicFragment : Fragment() {
     }
 
     private fun showSongMenu(anchor: View, model: VideoUiModel) {
-        val menu = PopupMenu(requireContext(), anchor)
-        menu.menu.add(0, 1, 0, R.string.cd_play_song)
-        menu.menu.add(0, 2, 1, R.string.go_to_artist)
-        menu.menu.add(0, 4, 2, R.string.action_playlist)
-        if (model.uploader.isNotBlank()) {
-            val starred = LocalStore.isFavoriteArtist(requireContext(), model.uploader)
-            menu.menu.add(
-                0,
-                3,
-                3,
-                if (starred) R.string.artist_unstar else R.string.artist_star
-            )
-        }
-        menu.setOnMenuItemClickListener { item ->
-            when (item.itemId) {
-                1 -> playSong(model, radio = true)
-                2 -> ArtistActivity.start(
-                    requireContext(),
-                    model.uploader,
-                    model.uploaderAvatarUrl.ifBlank { model.thumbnailUrl }
-                )
-                4 -> PlaylistSheets.showAdd(
-                    requireContext(),
-                    model.toEntry().copy(isMusic = true),
-                    music = true
-                )
-                3 -> {
-                    val now = LocalStore.toggleFavoriteArtist(
-                        requireContext(),
-                        ArtistEntry(
-                            name = model.uploader,
-                            avatarUrl = model.uploaderAvatarUrl.ifBlank { model.thumbnailUrl }
-                        )
-                    )
-                    Toast.makeText(
-                        requireContext(),
-                        if (now) R.string.artist_added else R.string.artist_removed,
-                        Toast.LENGTH_SHORT
-                    ).show()
-                    bindYourArtists()
-                }
-            }
-            true
-        }
-        menu.show()
+        MusicSongMenu.show(
+            anchor,
+            model,
+            play = true,
+            goToArtist = true,
+            addToPlaylist = true,
+            starArtist = true,
+            onStarChanged = { bindYourArtists() }
+        )
     }
 
     private fun buildMoodChips() {

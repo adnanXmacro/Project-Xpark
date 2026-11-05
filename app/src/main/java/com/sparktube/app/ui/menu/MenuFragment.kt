@@ -75,6 +75,7 @@ class MenuFragment : Fragment() {
         // (clear data moved into the general Settings page).
         binding.rowBackup.setOnClickListener { showBackupSheet() }
         binding.rowCheckUpdate.setOnClickListener { checkForUpdate(manual = true) }
+        binding.rowVersionHistory.setOnClickListener { VersionHistoryActivity.start(requireContext()) }
         binding.rowAbout.setOnClickListener { AboutActivity.start(requireContext()) }
 
         binding.version.text = getString(R.string.version_fmt, BuildConfig.VERSION_NAME)

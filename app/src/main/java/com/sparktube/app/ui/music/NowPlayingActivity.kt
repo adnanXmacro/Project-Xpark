@@ -240,6 +240,15 @@ class NowPlayingActivity : AppCompatActivity() {
     private fun loadArt(pixelSize: Int) {
         val entry = PlaybackCenter.currentEntry ?: return
         Thumbs.loadHiRes(binding.art, entry.thumbnailUrl, pixelSize.coerceAtLeast(0))
+        val url = entry.thumbnailUrl
+        if (url.isBlank()) {
+            binding.artBackdrop.isVisible = false
+            binding.artScrim.isVisible = false
+            return
+        }
+        binding.artBackdrop.isVisible = true
+        binding.artScrim.isVisible = true
+        Thumbs.loadBlurred(binding.artBackdrop, url)
     }
 
     private fun bindSleepButton() {

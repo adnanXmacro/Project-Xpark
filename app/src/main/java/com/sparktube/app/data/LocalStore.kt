@@ -400,6 +400,34 @@ object LocalStore {
     fun removeFromMusicPlaylist(context: Context, id: Long, url: String): Boolean =
         removeFromPlaylistIn(context, KEY_MUSIC_PLAYLISTS, id, url)
 
+    fun reorderMusicPlaylist(context: Context, id: Long, from: Int, to: Int): Boolean {
+        if (from == to) return false
+        val ctx = context.applicationContext
+        val sp = prefs(ctx)
+        val list = readPlaylists(sp, KEY_MUSIC_PLAYLISTS).toMutableList()
+        val idx = list.indexOfFirst { it.id == id }
+        if (idx < 0) return false
+        val target = list[idx]
+        val items = target.items.toMutableList()
+        if (from !in items.indices || to !in items.indices) return false
+        val item = items.removeAt(from)
+        items.add(to, item)
+        list[idx] = target.copy(items = items)
+        writePlaylists(sp, KEY_MUSIC_PLAYLISTS, list)
+        return true
+    }
+
+    fun setMusicPlaylistItems(context: Context, id: Long, items: List<VideoEntry>): Boolean {
+        val ctx = context.applicationContext
+        val sp = prefs(ctx)
+        val list = readPlaylists(sp, KEY_MUSIC_PLAYLISTS).toMutableList()
+        val idx = list.indexOfFirst { it.id == id }
+        if (idx < 0) return false
+        list[idx] = list[idx].copy(items = items.map { it.copy(isMusic = true) })
+        writePlaylists(sp, KEY_MUSIC_PLAYLISTS, list)
+        return true
+    }
+
     fun updateMusicPlaylistItem(context: Context, id: Long, entry: VideoEntry): Boolean {
         val ctx = context.applicationContext
         val sp = prefs(ctx)

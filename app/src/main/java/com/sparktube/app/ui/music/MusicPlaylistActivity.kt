@@ -12,6 +12,7 @@ import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.isVisible
 import androidx.lifecycle.lifecycleScope
+import androidx.recyclerview.widget.ItemTouchHelper
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.sparktube.app.R
 import com.sparktube.app.data.LocalStore
@@ -20,8 +21,10 @@ import com.sparktube.app.databinding.ActivityPlaylistBinding
 import com.sparktube.app.download.DownloadCenter
 import com.sparktube.app.playback.PlaybackCenter
 import com.sparktube.app.ui.common.MusicRowAdapter
+import com.sparktube.app.ui.common.MusicSongMenu
 import com.sparktube.app.ui.common.PlaylistSheets
 import com.sparktube.app.ui.common.VideoUiModel
+import com.sparktube.app.ui.common.toEntry
 import com.sparktube.app.ui.common.toQueueEntry
 import com.sparktube.app.ui.common.toUiModel
 import com.sparktube.app.util.PlaylistHydrator
@@ -58,12 +61,17 @@ class MusicPlaylistActivity : AppCompatActivity() {
         playlistId = intent.getLongExtra(EXTRA_ID, -1L)
         adapter = MusicRowAdapter(
             onClick = { model -> playFrom(songs.indexOfFirst { it.url == model.url }) },
-            onLongClick = { model ->
-                confirmRemove(model)
+            onMore = { anchor, model ->
+                MusicSongMenu.show(
+                    anchor,
+                    model,
+                    removeFromPlaylist = { confirmRemove(model) }
+                )
             }
         )
         binding.list.layoutManager = LinearLayoutManager(this)
         binding.list.adapter = adapter
+        ItemTouchHelper(reorderCallback).attachToRecyclerView(binding.list)
         binding.backButton.setOnClickListener { finish() }
         binding.playAllButton.setOnClickListener { playFrom(0) }
         binding.moreButton.isVisible = true
@@ -235,6 +243,55 @@ class MusicPlaylistActivity : AppCompatActivity() {
         if (songs.isEmpty()) return
         PlaybackCenter.playMusicQueue(songs.map { it.toQueueEntry(isMusic = true) }, index.coerceAtLeast(0))
         NowPlayingActivity.start(this)
+    }
+
+    private val reorderCallback = object : ItemTouchHelper.SimpleCallback(
+        ItemTouchHelper.UP or ItemTouchHelper.DOWN,
+        0
+    ) {
+        override fun onMove(
+            recyclerView: androidx.recyclerview.widget.RecyclerView,
+            viewHolder: androidx.recyclerview.widget.RecyclerView.ViewHolder,
+            target: androidx.recyclerview.widget.RecyclerView.ViewHolder
+        ): Boolean {
+            val from = viewHolder.bindingAdapterPosition
+            val to = target.bindingAdapterPosition
+            if (from == androidx.recyclerview.widget.RecyclerView.NO_POSITION ||
+                to == androidx.recyclerview.widget.RecyclerView.NO_POSITION ||
+                from == to
+            ) return false
+            val mutable = songs.toMutableList()
+            if (from !in mutable.indices || to !in mutable.indices) return false
+            val moved = mutable.removeAt(from)
+            mutable.add(to, moved)
+            songs = mutable
+            adapter.moveRow(from, to)
+            return true
+        }
+
+        override fun onSwiped(
+            viewHolder: androidx.recyclerview.widget.RecyclerView.ViewHolder,
+            direction: Int
+        ) = Unit
+
+        override fun clearView(
+            recyclerView: androidx.recyclerview.widget.RecyclerView,
+            viewHolder: androidx.recyclerview.widget.RecyclerView.ViewHolder
+        ) {
+            super.clearView(recyclerView, viewHolder)
+            persistOrder()
+        }
+
+        override fun isLongPressDragEnabled(): Boolean = true
+    }
+
+    private fun persistOrder() {
+        if (songs.isEmpty()) return
+        LocalStore.setMusicPlaylistItems(
+            this,
+            playlistId,
+            songs.map { it.toEntry().copy(isMusic = true) }
+        )
     }
 
     private fun confirmRemove(model: VideoUiModel) {

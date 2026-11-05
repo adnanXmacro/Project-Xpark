@@ -306,6 +306,11 @@
 
     <!-- Updates -->
     <string name="menu_check_update">Check for update</string>
+    <string name="menu_version_history">Version history</string>
+    <string name="action_play_next">Play next</string>
+    <string name="play_next_queued">Playing next</string>
+    <string name="action_remove_from_playlist">Remove from playlist</string>
+    <string name="version_history_heading_fmt">Open Tube %1$s</string>
     <string name="checking_update">Checking for updates…</string>
     <string name="up_to_date">You are on the latest version</string>
     <string name="update_available_title">Update available</string>
@@ -540,6 +545,11 @@
     <string name="sd_card_gone">SD card removed. Those songs will stream if they still can.</string>
     <string name="sd_adopted_warning">This card is adopted by this phone. Another device will not see the files.</string>
     <string name="quick_picks_refresh_failed">Could not refresh Quick picks</string>
+    <string name="changelog_1214_added_cover">Now Playing fades a blurred cover behind the square album art, YouTube Music style.</string>
+    <string name="changelog_1214_added_play_next">Play next on every music song menu: the song starts after the one playing now.</string>
+    <string name="changelog_1214_added_reorder">Long-press and drag to reorder songs inside a music playlist.</string>
+    <string name="changelog_1214_added_history">Version history in More lists every update we have notes for.</string>
+    <string name="changelog_1214_improved_update">The update popup always lists what that version added, improved, or fixed.</string>
     <string name="changelog_1213_fixed_share_names">Shared playlist songs now show their real names and album art instead of YouTube IDs.</string>
     <string name="changelog_1212_added_share">Share a music playlist as a QR code or Open Tube link so another phone can import it.</string>
     <string name="changelog_1212_added_sd">Export a music playlist to an SD card: playable files for a pocket MP3 player, or an Open Tube package another phone can load.</string>

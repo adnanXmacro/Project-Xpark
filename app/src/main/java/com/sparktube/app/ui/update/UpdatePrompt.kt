@@ -32,8 +32,12 @@ object UpdatePrompt {
         val version = release.tag.removePrefix("v").removePrefix("V")
         binding.versionText.text = activity.getString(R.string.update_version_fmt, version)
 
-        val sections = Changelog.parse(release.body)
-            .ifEmpty { Changelog.fallback(activity, version) }
+        val parsed = Changelog.parse(release.body)
+        val sections = if (parsed.any { it.items.any { item -> item.isNotBlank() } }) {
+            parsed
+        } else {
+            Changelog.fallback(activity, version)
+        }
         renderSections(activity, binding.changelog, sections)
 
         binding.downloadButton.setOnClickListener {
@@ -64,7 +68,9 @@ object UpdatePrompt {
         dialog.show()
     }
 
-    // ----- Internals -----
+    fun renderInto(activity: Activity, parent: LinearLayout, sections: List<ChangelogSection>) {
+        renderSections(activity, parent, sections)
+    }
 
     private fun renderSections(
         activity: Activity,

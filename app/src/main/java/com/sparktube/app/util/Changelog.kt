@@ -60,18 +60,25 @@ object Changelog {
             }
         }
         flush()
-        return out
+        return out.filter { section -> section.items.any { it.isNotBlank() } }
     }
 
     private fun cleanItem(text: String): String? {
         var s = text.replace(LINK, "$1")
         s = s.replace(URL, "")
         s = s.replace(BYLINE, "")
+        s = s.replace(Regex("[*_`#]"), "")
         s = s.replace(Regex("\\s+in\\s*$"), "")
-        s = s.replace(Regex("\\s+"), " ").trim().trim('-', '*', ' ')
-        if (s.isEmpty() || s.lowercase() in NOISE) return null
+        s = s.replace(Regex("\\s+"), " ").trim().trim('-', '*', ' ', ':')
+        val lower = s.lowercase()
+        if (s.isEmpty() || lower in NOISE || lower.startsWith("full changelog")) return null
         return s
     }
+
+    fun knownVersions(): List<String> = listOf(
+        "1.2.14", "1.2.13", "1.2.12", "1.2.11", "1.2.10",
+        "1.2.9", "1.2.8", "1.2.7", "1.2.6", "1.2.5", "1.2.4", "1.2.3"
+    )
 
     /**
      * Built-in notes used when a release has no usable body. [version] is the
@@ -80,6 +87,23 @@ object Changelog {
      */
     fun fallback(context: Context, version: String): List<ChangelogSection> {
         val v = version.removePrefix("v").removePrefix("V")
+        if (v == "1.2.14") {
+            return listOf(
+                ChangelogSection(
+                    context.getString(R.string.update_section_added),
+                    listOf(
+                        context.getString(R.string.changelog_1214_added_cover),
+                        context.getString(R.string.changelog_1214_added_play_next),
+                        context.getString(R.string.changelog_1214_added_reorder),
+                        context.getString(R.string.changelog_1214_added_history)
+                    )
+                ),
+                ChangelogSection(
+                    context.getString(R.string.update_section_improved),
+                    listOf(context.getString(R.string.changelog_1214_improved_update))
+                )
+            )
+        }
         if (v == "1.2.13") {
             return listOf(
                 ChangelogSection(

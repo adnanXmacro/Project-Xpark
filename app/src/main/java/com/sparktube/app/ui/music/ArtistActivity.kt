@@ -15,6 +15,7 @@ import com.sparktube.app.data.YtRepository
 import com.sparktube.app.databinding.ActivityArtistBinding
 import com.sparktube.app.playback.PlaybackCenter
 import com.sparktube.app.ui.common.MusicRowAdapter
+import com.sparktube.app.ui.common.MusicSongMenu
 import com.sparktube.app.ui.common.VideoUiModel
 import com.sparktube.app.ui.common.toQueueEntry
 import com.sparktube.app.ui.common.toUiModel
@@ -63,6 +64,9 @@ class ArtistActivity : AppCompatActivity() {
             onClick = { model ->
                 PlaybackCenter.playMusic(model.toQueueEntry(isMusic = true), radio = true)
                 NowPlayingActivity.start(this)
+            },
+            onMore = { anchor, model ->
+                MusicSongMenu.show(anchor, model)
             }
         )
         binding.list.layoutManager = LinearLayoutManager(this)

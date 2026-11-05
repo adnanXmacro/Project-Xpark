@@ -540,6 +540,31 @@ object PlaybackCenter {
     }
 
     /**
+     * Inserts [entry] to play after the current song. Returns true when
+     * playback started (caller should open Now Playing); false when the
+     * song was only queued (toast only).
+     */
+    fun playNextMusic(entry: QueueEntry): Boolean {
+        initFromApp()
+        if (mode == Mode.AUDIO && queueIndex >= 0 && queue.isNotEmpty()) {
+            val insertAt = (queueIndex + 1).coerceAtMost(queue.size)
+            queue.add(insertAt, entry)
+            playerRef?.let { player ->
+                if (player.mediaItemCount > 0) {
+                    player.addMediaItem(
+                        insertAt.coerceAtMost(player.mediaItemCount),
+                        musicMediaItem(entry)
+                    )
+                }
+            }
+            notify { it.onQueueChanged() }
+            return false
+        }
+        playMusic(entry, radio = false)
+        return true
+    }
+
+    /**
      * Plays a fixed video playlist starting at [startIndex]. The whole list
      * is the queue (previous / next work across it) and every video that
      * finishes hands over to the next one; nothing else is mixed in.

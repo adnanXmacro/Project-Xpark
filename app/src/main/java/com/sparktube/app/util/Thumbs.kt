@@ -1,6 +1,9 @@
 package com.sparktube.app.util
 
+import android.graphics.RenderEffect
+import android.graphics.Shader
 import android.graphics.drawable.ColorDrawable
+import android.os.Build
 import android.widget.ImageView
 import androidx.core.content.ContextCompat
 import coil.load
@@ -66,6 +69,36 @@ object Thumbs {
             return
         }
         loadHiResChain(view, stillChain(original), 0, pixelSize)
+    }
+
+    fun loadBlurred(view: ImageView, url: String?) {
+        val original = url.orEmpty()
+        if (original.isBlank()) {
+            if (Build.VERSION.SDK_INT >= 31) view.setRenderEffect(null)
+            view.setImageDrawable(null)
+            return
+        }
+        if (Build.VERSION.SDK_INT >= 31) {
+            view.setRenderEffect(
+                RenderEffect.createBlurEffect(48f, 48f, Shader.TileMode.CLAMP)
+            )
+            loadHiRes(view, original, 256)
+            return
+        }
+        val chain = stillChain(original)
+        view.load(chain.first()) {
+            placeholder(placeholderDrawable(view))
+            error(placeholderDrawable(view))
+            crossfade(true)
+            size(32)
+            listener(
+                onError = { _, _ ->
+                    if (chain.size > 1) {
+                        view.load(chain[1]) { size(32) }
+                    }
+                }
+            )
+        }
     }
 
     private fun loadHiResChain(view: ImageView, chain: List<String>, index: Int, pixelSize: Int) {

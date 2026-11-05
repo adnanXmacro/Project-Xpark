@@ -15,9 +15,8 @@ import com.sparktube.app.databinding.ActivityMusicListBinding
 import com.sparktube.app.download.DownloadCenter
 import com.sparktube.app.playback.PlaybackCenter
 import com.sparktube.app.playback.QueueEntry
-import com.sparktube.app.playback.toVideoEntry
 import com.sparktube.app.ui.common.MusicRowAdapter
-import com.sparktube.app.ui.common.PlaylistSheets
+import com.sparktube.app.ui.common.MusicSongMenu
 import com.sparktube.app.ui.common.VideoUiModel
 import com.sparktube.app.util.Themes
 import java.io.File
@@ -60,11 +59,8 @@ class MusicListActivity : AppCompatActivity() {
                     confirmDelete(record)
                 }
             }),
-            onMore = { _, model ->
-                val entry = entries.firstOrNull { it.url == model.url }
-                if (entry != null) {
-                    PlaylistSheets.showAdd(this, entry.toVideoEntry(), music = true)
-                }
+            onMore = { anchor, model ->
+                MusicSongMenu.show(anchor, model, addToPlaylist = true)
             }
         )
         binding.list.layoutManager = LinearLayoutManager(this)
