@@ -1,6 +1,8 @@
 package com.sparktube.app.ui.library
 
 import android.os.Bundle
+import android.os.Handler
+import android.os.Looper
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -19,6 +21,7 @@ import com.sparktube.app.playback.PlaybackCenter
 import com.sparktube.app.ui.channel.ChannelActivity
 import com.sparktube.app.ui.common.ChannelRowAdapter
 import com.sparktube.app.ui.common.DownloadAdapter
+import com.sparktube.app.ui.common.DownloadUiModel
 import com.sparktube.app.ui.common.PlaylistAdapter
 import com.sparktube.app.ui.common.PlaylistSheets
 import com.sparktube.app.ui.common.VideoAdapter
@@ -43,6 +46,19 @@ class LibraryFragment : Fragment() {
 
     private var tab = TAB_HISTORY
 
+    private val downloadPollHandler = Handler(Looper.getMainLooper())
+    private val downloadPollRunnable = object : Runnable {
+        override fun run() {
+            if (tab == TAB_DOWNLOADS && isResumed && !isHidden) {
+                bindDownloads(refreshListOnly = true)
+                val ctx = context
+                if (ctx != null && DownloadCenter.hasAnyActiveDownload(ctx)) {
+                    downloadPollHandler.postDelayed(this, 500L)
+                }
+            }
+        }
+    }
+
     override fun onCreateView(
         inflater: LayoutInflater,
         container: ViewGroup?,
@@ -54,6 +70,10 @@ class LibraryFragment : Fragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
+
+        if (arguments?.getBoolean(ARG_OPEN_DOWNLOADS, false) == true) {
+            tab = TAB_DOWNLOADS
+        }
 
         videoAdapter = VideoAdapter(
             onClick = { model -> PlayerActivity.start(requireContext(), model) },
@@ -99,6 +119,9 @@ class LibraryFragment : Fragment() {
         binding.tabs.addOnTabSelectedListener(object : TabLayout.OnTabSelectedListener {
             override fun onTabSelected(tab: TabLayout.Tab) {
                 this@LibraryFragment.tab = tab.position
+                if (tab.position != TAB_DOWNLOADS) {
+                    downloadPollHandler.removeCallbacks(downloadPollRunnable)
+                }
                 refresh()
             }
 
@@ -117,9 +140,26 @@ class LibraryFragment : Fragment() {
         refresh()
     }
 
+    override fun onPause() {
+        super.onPause()
+        downloadPollHandler.removeCallbacks(downloadPollRunnable)
+    }
+
     override fun onHiddenChanged(hidden: Boolean) {
         super.onHiddenChanged(hidden)
-        if (!hidden) refresh()
+        if (!hidden) {
+            refresh()
+        } else {
+            downloadPollHandler.removeCallbacks(downloadPollRunnable)
+        }
+    }
+
+    fun openDownloadsTab() {
+        tab = TAB_DOWNLOADS
+        _binding?.let { b ->
+            b.tabs.selectTab(b.tabs.getTabAt(TAB_DOWNLOADS))
+            refresh()
+        }
     }
 
     private fun refresh() {
@@ -135,6 +175,7 @@ class LibraryFragment : Fragment() {
     }
 
     private fun bindVideos(entries: List<com.sparktube.app.data.VideoEntry>, emptyText: Int) {
+        downloadPollHandler.removeCallbacks(downloadPollRunnable)
         binding.list.adapter = videoAdapter
         videoAdapter.submitList(entries.map { it.toUiModel() })
         binding.emptyView.setText(emptyText)
@@ -142,6 +183,7 @@ class LibraryFragment : Fragment() {
     }
 
     private fun bindChannels() {
+        downloadPollHandler.removeCallbacks(downloadPollRunnable)
         val context = context ?: return
         val channels = LocalStore.subscriptions(context)
         binding.list.adapter = channelAdapter
@@ -150,18 +192,31 @@ class LibraryFragment : Fragment() {
         binding.emptyView.isVisible = channels.isEmpty()
     }
 
-    private fun bindDownloads() {
+    private fun bindDownloads(refreshListOnly: Boolean = false) {
         val context = context ?: return
-        DownloadCenter.refreshStatuses(context)
-        // Music downloads live on the Music page, not here.
-        val downloads = LocalStore.videoDownloads(context)
-        binding.list.adapter = downloadAdapter
-        downloadAdapter.submitList(downloads)
+        if (!refreshListOnly) {
+            DownloadCenter.refreshStatuses(context)
+        }
+        val downloads = LocalStore.downloads(context)
+        val models = downloads.map { record ->
+            val p = DownloadCenter.recordProgress(record)
+            DownloadUiModel(record, p.percent, p.downloadedBytes, p.totalBytes)
+        }
+        if (binding.list.adapter != downloadAdapter) {
+            binding.list.adapter = downloadAdapter
+        }
+        downloadAdapter.submitList(models)
         binding.emptyView.setText(R.string.empty_downloads)
         binding.emptyView.isVisible = downloads.isEmpty()
+
+        downloadPollHandler.removeCallbacks(downloadPollRunnable)
+        if (DownloadCenter.hasAnyActiveDownload(context)) {
+            downloadPollHandler.postDelayed(downloadPollRunnable, 500L)
+        }
     }
 
     private fun bindPlaylists() {
+        downloadPollHandler.removeCallbacks(downloadPollRunnable)
         val context = context ?: return
         val playlists = LocalStore.playlists(context)
         binding.list.adapter = playlistAdapter
@@ -220,10 +275,12 @@ class LibraryFragment : Fragment() {
 
     override fun onDestroyView() {
         super.onDestroyView()
+        downloadPollHandler.removeCallbacks(downloadPollRunnable)
         _binding = null
     }
 
     companion object {
+        const val ARG_OPEN_DOWNLOADS = "arg_open_downloads"
         private const val TAB_HISTORY = 0
         private const val TAB_FAVORITES = 1
         private const val TAB_SUBSCRIPTIONS = 2

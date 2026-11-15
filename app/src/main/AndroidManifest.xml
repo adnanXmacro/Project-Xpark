@@ -193,6 +193,11 @@
             android:exported="false"
             android:foregroundServiceType="dataSync" />
 
+        <service
+            android:name=".download.DownloadService"
+            android:exported="false"
+            android:foregroundServiceType="dataSync" />
+
         <!-- Shares locally-saved crash log files with other apps (Settings →
              Crash logs → share) without exposing raw file paths. -->
         <provider

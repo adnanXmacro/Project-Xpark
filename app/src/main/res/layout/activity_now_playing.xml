@@ -313,6 +313,18 @@
             android:textSize="13sp"
             android:visibility="gone" />
 
+        <com.google.android.material.progressindicator.LinearProgressIndicator
+            android:id="@+id/downloadProgressBar"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="48dp"
+            android:layout_marginEnd="48dp"
+            android:layout_marginTop="4dp"
+            android:visibility="gone"
+            app:indicatorColor="@color/spark_red"
+            app:trackColor="@color/surface_elevated"
+            app:trackCornerRadius="4dp" />
+
         <!-- Up next: opens the full queue so radio songs can be picked. -->
         <LinearLayout
             android:id="@+id/upNextCard"

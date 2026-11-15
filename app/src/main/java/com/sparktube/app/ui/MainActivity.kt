@@ -74,6 +74,7 @@ class MainActivity : AppCompatActivity() {
         requestNotificationPermissionIfNeeded()
         silentlyCheckForUpdate()
         handleInstallIntent(intent)
+        handleOpenDownloadsIntent(intent)
         if (savedInstanceState == null) OpenLinksHint.maybeShow(this)
 
         binding.floatingNav.onTabSelected = { id -> select(id, fromNav = true) }
@@ -112,6 +113,7 @@ class MainActivity : AppCompatActivity() {
         super.onNewIntent(intent)
         setIntent(intent)
         handleInstallIntent(intent)
+        handleOpenDownloadsIntent(intent)
     }
 
     override fun onResume() {
@@ -126,6 +128,14 @@ class MainActivity : AppCompatActivity() {
         if (intent?.getBooleanExtra(EXTRA_INSTALL_UPDATE, false) == true) {
             intent.removeExtra(EXTRA_INSTALL_UPDATE)
             UpdateInstaller.launchInstall(fromUserTap = true)
+        }
+    }
+
+    private fun handleOpenDownloadsIntent(intent: Intent?) {
+        if (intent?.getBooleanExtra(EXTRA_OPEN_DOWNLOADS, false) == true) {
+            intent.removeExtra(EXTRA_OPEN_DOWNLOADS)
+            select(R.id.navLibrary)
+            (fragments[R.id.navLibrary] as? LibraryFragment)?.openDownloadsTab()
         }
     }
 
@@ -270,7 +280,13 @@ class MainActivity : AppCompatActivity() {
     private fun createFragment(id: Int): Fragment = when (id) {
         R.id.navHome -> HomeFragment()
         R.id.navMusic -> MusicFragment()
-        R.id.navLibrary -> LibraryFragment()
+        R.id.navLibrary -> LibraryFragment().apply {
+            if (intent.getBooleanExtra(EXTRA_OPEN_DOWNLOADS, false)) {
+                arguments = Bundle().apply {
+                    putBoolean(LibraryFragment.ARG_OPEN_DOWNLOADS, true)
+                }
+            }
+        }
         else -> MenuFragment()
     }
 
@@ -291,6 +307,7 @@ class MainActivity : AppCompatActivity() {
 
     companion object {
         const val EXTRA_INSTALL_UPDATE = "install_update"
+        const val EXTRA_OPEN_DOWNLOADS = "open_downloads"
         private const val STATE_SELECTED = "selected_nav"
         private const val REQ_NOTIFICATIONS = 4711
         private val NAV_IDS = intArrayOf(R.id.navHome, R.id.navMusic, R.id.navLibrary, R.id.navMenu)

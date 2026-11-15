@@ -441,18 +441,28 @@ class NowPlayingActivity : AppCompatActivity() {
                 binding.downloadButton.setImageResource(R.drawable.ic_check)
                 binding.downloadButton.setColorFilter(getColor(R.color.music_green))
                 binding.downloadStatus.isVisible = false
+                binding.downloadProgressBar.isVisible = false
             }
             DownloadCenter.hasActiveDownload(this, entry.url) -> {
                 binding.downloadButton.setImageResource(R.drawable.ic_download)
                 binding.downloadButton.setColorFilter(getColor(R.color.on_surface))
                 val percent = DownloadCenter.downloadProgress(this, entry.url)
-                binding.downloadStatus.text = getString(R.string.downloading_fmt, percent)
+                if (percent >= 0) {
+                    binding.downloadStatus.text = getString(R.string.downloading_fmt, percent)
+                    binding.downloadProgressBar.isIndeterminate = false
+                    binding.downloadProgressBar.progress = percent
+                } else {
+                    binding.downloadStatus.text = getString(R.string.download_status_running)
+                    binding.downloadProgressBar.isIndeterminate = true
+                }
                 binding.downloadStatus.isVisible = true
+                binding.downloadProgressBar.isVisible = true
             }
             else -> {
                 binding.downloadButton.setImageResource(R.drawable.ic_download)
                 binding.downloadButton.setColorFilter(getColor(R.color.on_surface))
                 binding.downloadStatus.isVisible = false
+                binding.downloadProgressBar.isVisible = false
             }
         }
     }

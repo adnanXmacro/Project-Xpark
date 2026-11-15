@@ -188,6 +188,69 @@ object DownloadCenter {
             it.status == STATUS_PENDING || it.status == STATUS_RUNNING
         }
 
+    fun hasAnyActiveDownload(context: Context): Boolean =
+        LocalStore.downloads(context).any {
+            it.status == STATUS_PENDING || it.status == STATUS_RUNNING
+        }
+
+    fun activeRecords(context: Context): List<DownloadRecord> =
+        LocalStore.downloads(context).filter {
+            it.status == STATUS_PENDING || it.status == STATUS_RUNNING
+        }
+
+    data class ProgressInfo(
+        val percent: Int,
+        val downloadedBytes: Long,
+        val totalBytes: Long
+    )
+
+    fun recordProgress(record: DownloadRecord): ProgressInfo {
+        if (record.status == STATUS_DONE) {
+            val total = record.filePaths.sumOf { File(it).takeIf { f -> f.exists() }?.length() ?: 0L }
+            return ProgressInfo(percent = 100, downloadedBytes = total, totalBytes = total)
+        }
+        var done = 0L
+        var total = 0L
+        var hasJobs = false
+        record.downloadIds.forEach { id ->
+            val job = jobs[id]
+            if (job != null) {
+                hasJobs = true
+                done += job.progress.get()
+                total += job.size
+            }
+        }
+        if (!hasJobs || total <= 0L) {
+            return ProgressInfo(
+                percent = if (record.status == STATUS_RUNNING) -1 else 0,
+                downloadedBytes = done,
+                totalBytes = total
+            )
+        }
+        val percent = ((done * 100L) / total).toInt().coerceIn(0, 100)
+        return ProgressInfo(percent = percent, downloadedBytes = done, totalBytes = total)
+    }
+
+    fun totalActiveProgress(context: Context): ProgressInfo {
+        val active = activeRecords(context)
+        if (active.isEmpty()) {
+            return ProgressInfo(percent = -1, downloadedBytes = 0L, totalBytes = 0L)
+        }
+        var done = 0L
+        var total = 0L
+        active.forEach { record ->
+            record.downloadIds.forEach { id ->
+                val job = jobs[id]
+                if (job != null) {
+                    done += job.progress.get()
+                    total += job.size
+                }
+            }
+        }
+        val percent = if (total > 0L) ((done * 100L) / total).toInt().coerceIn(0, 100) else -1
+        return ProgressInfo(percent = percent, downloadedBytes = done, totalBytes = total)
+    }
+
     /**
      * Aggregate progress (0..100) across all active records of one video.
      * Returns -1 when nothing is downloading.
@@ -207,7 +270,7 @@ object DownloadCenter {
                 }
             }
         }
-        if (total <= 0L) return 0
+        if (total <= 0L) return -1
         return ((done * 100) / total).toInt().coerceIn(0, 100)
     }
 
@@ -306,6 +369,7 @@ object DownloadCenter {
                 downloadIds = listOf(job.id)
             )
         )
+        DownloadService.start(context)
         job.start()
     }
 
@@ -340,6 +404,7 @@ object DownloadCenter {
                 downloadIds = listOf(videoJob.id, audioJob.id)
             )
         )
+        DownloadService.start(context)
         videoJob.start()
         audioJob.start()
     }
@@ -353,6 +418,18 @@ object DownloadCenter {
             runCatching { File(path).delete() }
         }
         LocalStore.removeDownload(context, record)
+    }
+
+    fun cancelActive(context: Context) = synchronized(syncLock) {
+        val activeRecords = LocalStore.downloads(context)
+            .filter { it.status == STATUS_PENDING || it.status == STATUS_RUNNING }
+        activeRecords.forEach { delete(context, it) }
+    }
+
+    fun cancelByVideoId(context: Context, videoId: String) = synchronized(syncLock) {
+        val matching = LocalStore.downloads(context)
+            .filter { it.videoId == videoId && (it.status == STATUS_PENDING || it.status == STATUS_RUNNING) }
+        matching.forEach { delete(context, it) }
     }
 
     /**
@@ -410,6 +487,9 @@ object DownloadCenter {
                             }
                             AppPrefs.addBytesDownloaded(bytes)
                             announceDone(context)
+                            DownloadService.notifyDownloadCompleted(context, record)
+                        } else {
+                            DownloadService.notifyDownloadFailed(context, record)
                         }
                         recordJobs.forEach { jobs.remove(it.id) }
                     }

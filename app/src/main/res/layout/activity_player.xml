@@ -435,6 +435,16 @@
                             android:src="@drawable/ic_download"
                             app:tint="@color/on_surface" />
 
+                        <com.google.android.material.progressindicator.CircularProgressIndicator
+                            android:id="@+id/actionDownloadProgress"
+                            android:layout_width="20dp"
+                            android:layout_height="20dp"
+                            android:visibility="gone"
+                            app:indicatorSize="18dp"
+                            app:trackThickness="2.5dp"
+                            app:indicatorColor="@color/spark_red"
+                            app:trackColor="@color/surface_elevated" />
+
                         <TextView
                             android:id="@+id/actionDownloadLabel"
                             style="@style/ActionPillText"

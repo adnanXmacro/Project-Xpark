@@ -1222,17 +1222,28 @@ class PlayerActivity : AppCompatActivity() {
         val entry = PlaybackCenter.currentEntry ?: return
         when {
             DownloadCenter.isDownloaded(this, entry.url) -> {
+                binding.actionDownloadIcon.isVisible = true
+                binding.actionDownloadProgress.isVisible = false
                 binding.actionDownloadIcon.setImageResource(R.drawable.ic_check)
                 binding.actionDownloadIcon.setColorFilter(getColor(R.color.music_green))
                 binding.actionDownloadLabel.text = getString(R.string.downloaded_label)
             }
             DownloadCenter.hasActiveDownload(this, entry.url) -> {
                 val percent = DownloadCenter.downloadProgress(this, entry.url)
-                binding.actionDownloadIcon.setImageResource(R.drawable.ic_download)
-                binding.actionDownloadIcon.setColorFilter(getColor(R.color.on_surface))
-                binding.actionDownloadLabel.text = getString(R.string.downloading_fmt, percent)
+                binding.actionDownloadIcon.isVisible = false
+                binding.actionDownloadProgress.isVisible = true
+                if (percent >= 0) {
+                    binding.actionDownloadProgress.isIndeterminate = false
+                    binding.actionDownloadProgress.progress = percent
+                    binding.actionDownloadLabel.text = getString(R.string.downloading_fmt, percent)
+                } else {
+                    binding.actionDownloadProgress.isIndeterminate = true
+                    binding.actionDownloadLabel.text = getString(R.string.download_status_running)
+                }
             }
             else -> {
+                binding.actionDownloadIcon.isVisible = true
+                binding.actionDownloadProgress.isVisible = false
                 binding.actionDownloadIcon.setImageResource(R.drawable.ic_download)
                 binding.actionDownloadIcon.setColorFilter(getColor(R.color.on_surface))
                 binding.actionDownloadLabel.text = getString(R.string.action_download)

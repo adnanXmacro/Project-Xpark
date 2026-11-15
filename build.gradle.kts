@@ -1,4 +1,11 @@
 // Top-level build file for the SparkTube project
+buildscript {
+    repositories {
+        google()
+        mavenCentral()
+    }
+}
+
 plugins {
     // 8.6.x is required for compileSdk 35. Gradle 8.7 wrapper satisfies AGP 8.6.
     id("com.android.application") version "8.6.1" apply false

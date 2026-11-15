@@ -76,7 +76,7 @@ object Changelog {
     }
 
     fun knownVersions(): List<String> = listOf(
-        "1.2.14", "1.2.13", "1.2.12", "1.2.11", "1.2.10",
+        "1.2.15", "1.2.14", "1.2.13", "1.2.12", "1.2.11", "1.2.10",
         "1.2.9", "1.2.8", "1.2.7", "1.2.6", "1.2.5", "1.2.4", "1.2.3"
     )
 
@@ -87,6 +87,22 @@ object Changelog {
      */
     fun fallback(context: Context, version: String): List<ChangelogSection> {
         val v = version.removePrefix("v").removePrefix("V")
+        if (v == "1.2.15") {
+            return listOf(
+                ChangelogSection(
+                    context.getString(R.string.update_section_added),
+                    listOf(
+                        context.getString(R.string.changelog_1215_added_progress),
+                        context.getString(R.string.changelog_1215_added_service),
+                        context.getString(R.string.changelog_1215_added_notifications)
+                    )
+                ),
+                ChangelogSection(
+                    context.getString(R.string.update_section_improved),
+                    listOf(context.getString(R.string.changelog_1215_improved_tracking))
+                )
+            )
+        }
         if (v == "1.2.14") {
             return listOf(
                 ChangelogSection(

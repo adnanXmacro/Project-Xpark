@@ -119,6 +119,13 @@
     <string name="download_type_audio">Audio</string>
     <string name="download_type_video">Video</string>
     <string name="download_type_av">Video + Audio</string>
+    <string name="download_notif_channel_progress">Active Downloads</string>
+    <string name="download_notif_channel_complete">Completed Downloads</string>
+    <string name="download_notif_cancel">Cancel</string>
+    <string name="download_notif_complete_title">Download completed</string>
+    <string name="download_notif_failed_title">Download failed</string>
+    <string name="download_progress_fmt">%1$d%% • %2$s / %3$s</string>
+    <string name="download_multiple_fmt">%1$s (+%2$d more)</string>
 
     <!-- Music -->
     <string name="music_trending_shelf">Trending now</string>
@@ -545,6 +552,10 @@
     <string name="sd_card_gone">SD card removed. Those songs will stream if they still can.</string>
     <string name="sd_adopted_warning">This card is adopted by this phone. Another device will not see the files.</string>
     <string name="quick_picks_refresh_failed">Could not refresh Quick picks</string>
+    <string name="changelog_1215_added_progress">Live progress bars for video and audio downloads with percentage and byte counts.</string>
+    <string name="changelog_1215_added_service">Background download service keeps active downloads running even when the app is closed.</string>
+    <string name="changelog_1215_added_notifications">Ongoing progress notifications with a Cancel button and tap-to-open completion alerts.</string>
+    <string name="changelog_1215_improved_tracking">Smooth real-time download status indicators in Library, Video Player, and Now Playing screens.</string>
     <string name="changelog_1214_added_cover">Now Playing fades a blurred cover behind the square album art, YouTube Music style.</string>
     <string name="changelog_1214_added_play_next">Play next on every music song menu: the song starts after the one playing now.</string>
     <string name="changelog_1214_added_reorder">Long-press and drag to reorder songs inside a music playlist.</string>
