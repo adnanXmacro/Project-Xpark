@@ -45,10 +45,15 @@ class MusicListActivity : AppCompatActivity() {
             getString(if (favourites) R.string.music_favorites else R.string.music_downloads)
 
         adapter = MusicRowAdapter(
-            onClick = { model ->
-                val index = entries.indexOfFirst { it.url == model.url }
-                if (index >= 0) {
-                    PlaybackCenter.playMusicQueue(entries, index)
+            // The row position is the authoritative index into `entries`: the
+            // adapter is fed `entries.map { it.toRowModel() }` in order, so the
+            // tapped row always maps to entries[position]. Matching by URL is
+            // unreliable — download rows are keyed by file path, which is not
+            // unique across records and can be collapsed by the adapter's
+            // DiffUtil (URL identity), which is what made the wrong song play.
+            onClick = { _, position ->
+                if (position in entries.indices) {
+                    PlaybackCenter.playMusicQueue(entries, position)
                     NowPlayingActivity.start(this)
                 }
             },

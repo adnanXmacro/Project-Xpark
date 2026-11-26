@@ -118,7 +118,7 @@ class SearchActivity : AppCompatActivity() {
             }
         )
         musicAdapter = MusicRowAdapter(
-            onClick = { model -> playMusic(model) },
+            onClick = { model, _ -> playMusic(model) },
             onMore = { anchor, model -> showMusicMore(anchor, model) }
         )
         suggestionAdapter = SuggestionAdapter(

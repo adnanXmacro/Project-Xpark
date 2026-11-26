@@ -61,7 +61,7 @@ class ArtistActivity : AppCompatActivity() {
         }
 
         adapter = MusicRowAdapter(
-            onClick = { model ->
+            onClick = { model, _ ->
                 PlaybackCenter.playMusic(model.toQueueEntry(isMusic = true), radio = true)
                 NowPlayingActivity.start(this)
             },

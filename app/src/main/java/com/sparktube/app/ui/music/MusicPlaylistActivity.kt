@@ -60,7 +60,16 @@ class MusicPlaylistActivity : AppCompatActivity() {
 
         playlistId = intent.getLongExtra(EXTRA_ID, -1L)
         adapter = MusicRowAdapter(
-            onClick = { model -> playFrom(songs.indexOfFirst { it.url == model.url }) },
+            // Row position is authoritative: the adapter is fed `songs` in
+            // order and RecyclerView keeps the bound position current through
+            // reorders, so the tapped row always maps to songs[position].
+            // URL matching is unreliable (duplicate / non-unique URLs resolve
+            // to the wrong index).
+            onClick = { _, position ->
+                if (songs.isNotEmpty() && position in songs.indices) {
+                    playFrom(position)
+                }
+            },
             onMore = { anchor, model ->
                 MusicSongMenu.show(
                     anchor,
