@@ -1,8 +1,8 @@
 <div align="center">
 
-# Open Tube
+# OpenTube
 
-**Open Tube by project Adnan** — a lightweight, fully anonymous YouTube client for Android, based on SparkTube. Built with Kotlin & NewPipeExtractor.
+**OpenTube by project Adnan** — a lightweight, fully anonymous YouTube client for Android. Built with Kotlin & NewPipeExtractor.
 
 No Google account. No API keys. No tracking. No live streams.
 
@@ -64,21 +64,20 @@ No Google account. No API keys. No tracking. No live streams.
 
 ## 📖 About
 
-**Open Tube by project Adnan** is a lightweight YouTube client for Android, written in **Kotlin**
-and based on [SparkTube](https://github.com/devfahim00/SparkTube). It is powered by
+**OpenTube by project Adnan** is a lightweight YouTube client for Android, written in **Kotlin**.
+It is powered by
 [NewPipeExtractor](https://github.com/TeamNewPipe/NewPipeExtractor) — the same extraction library
 behind the [NewPipe](https://newpipe.net/) project.
 
 It is designed to be **fully anonymous**: there is no Google account login, no API key requirement,
-and no analytics or tracking of any kind. On first launch, Open Tube asks for your **country / region**
+and no analytics or tracking of any kind. On first launch, OpenTube asks for your **country / region**
 and then tailors trending video suggestions to that region.
 
-Open Tube also **intentionally never shows live streams** — not in the home feed, not in search
+OpenTube also **intentionally never shows live streams** — not in the home feed, not in search
 results, and not in the player — keeping the experience focused purely on on-demand videos.
 
 The Android package is `com.opentubebyproadnan.app`. In-app updates come only from
 [Project-Xpark releases](https://github.com/adnanXmacro/Project-Xpark/releases) after we ship.
-SparkTube APKs are a different app and will not overwrite Open Tube.
 
 ---
 
@@ -106,13 +105,9 @@ SparkTube APKs are a different app and will not overwrite Open Tube.
 
 <div align="center">
 
-| Home | Music | Search | Player |
-|:---:|:---:|:---:|:---:|
-| <img src="docs/screenshots/home.png" width="200" alt="Home screen"> | <img src="docs/screenshots/music.png" width="200" alt="Music screen"> | <img src="docs/screenshots/search.png" width="200" alt="Search screen"> | <img src="docs/screenshots/player.png" width="200" alt="Player screen"> |
-
-| Library | Region Picker | Menu |
-|:---:|:---:|:---:|
-| <img src="docs/screenshots/library.png" width="200" alt="Library screen"> | <img src="docs/screenshots/region.png" width="200" alt="Region picker"> | <img src="docs/screenshots/menu.png" width="200" alt="Menu screen"> |
+| Home | Music | Music Player | Library | Menu |
+|:---:|:---:|:---:|:---:|:---:|
+| <img src="docs/screenshots/home.jpg" width="200" alt="Home screen"> | <img src="docs/screenshots/music.jpg" width="200" alt="Music screen"> | <img src="docs/screenshots/musicplayer.jpg" width="200" alt="Music player"> | <img src="docs/screenshots/organized_library.jpg" width="200" alt="Library screen"> | <img src="docs/screenshots/manue.jpg" width="200" alt="Menu screen"> |
 
 </div>
 
@@ -229,14 +224,14 @@ app/build/outputs/apk/debug/
 
 ## 🔐 Privacy
 
-Open Tube is built with privacy as a core principle:
+OpenTube is built with privacy as a core principle:
 
 - ✅ **No Google account** required or supported
 - ✅ **No API keys** — data is fetched through NewPipeExtractor
 - ✅ **No analytics or tracking** libraries
 - ✅ **Local-only storage** — watch history and favorites never leave your device
 - ✅ **Region is just a preference** — used only to tailor trending results
-- ✅ **On-device crash logs** — if Open Tube crashes, a plain-text report is saved to the `SparkTube` folder on your device (no Firebase, nothing is uploaded anywhere). View, share, or delete them anytime from **Settings → Crash logs**
+- ✅ **On-device crash logs** — if OpenTube crashes, a plain-text report is saved to the `OpenTube` folder on your device (no Firebase, nothing is uploaded anywhere). View, share, or delete them anytime from **Settings → Crash logs**
 
 ---
 
@@ -273,7 +268,7 @@ in Android Studio.
 
 <br>
 
-Open Tube requires **JDK 17**. In Android Studio go to
+OpenTube requires **JDK 17**. In Android Studio go to
 **Settings → Build, Execution, Deployment → Build Tools → Gradle** and set **Gradle JDK** to 17.
 
 </details>
@@ -298,7 +293,7 @@ dependency version, and rebuild. Also confirm that your device has internet acce
 
 <br>
 
-No. Open Tube is completely anonymous and uses NewPipeExtractor instead of the official YouTube API.
+No. OpenTube is completely anonymous and uses NewPipeExtractor instead of the official YouTube API.
 
 </details>
 
@@ -330,11 +325,11 @@ Only on your device. Nothing is uploaded or synced anywhere.
 </details>
 
 <details>
-<summary><b>Is Open Tube affiliated with YouTube, Google, or NewPipe?</b></summary>
+<summary><b>Is OpenTube affiliated with YouTube, Google, or NewPipe?</b></summary>
 
 <br>
 
-No. Open Tube is an independent project based on SparkTube. See the [Disclaimer](#-disclaimer).
+No. OpenTube is an independent project. See the [Disclaimer](#-disclaimer).
 
 </details>
 
@@ -343,8 +338,7 @@ No. Open Tube is an independent project based on SparkTube. See the [Disclaimer]
 
 <br>
 
-Only from this repo's GitHub Releases. SparkTube updates are never offered to Open Tube users.
-We port core changes ourselves, then ship our own version.
+Only from this repo's GitHub Releases.
 
 </details>
 
@@ -380,7 +374,7 @@ your device model, and Android version.
 ## ⚠️ Disclaimer
 
 > **This project is for educational purposes only.**
-> Open Tube is **not affiliated with, endorsed by, or connected to YouTube or Google** in any way.
+> OpenTube is **not affiliated with, endorsed by, or connected to YouTube or Google** in any way.
 > All trademarks and brand names belong to their respective owners.
 > Please respect the [YouTube Terms of Service](https://www.youtube.com/t/terms) when using this software.
 > The developer is not responsible for any misuse of this project.
@@ -408,19 +402,17 @@ Distributed under the **GPLv3**. See the `LICENSE` file for more information.
 
 ## 📬 Contact
 
-**project Adnan** — Open Tube
+**project Adnan** — OpenTube
 
 Help Line: [https://discord.gg/tY4jGUJ4](https://discord.gg/tY4jGUJ4)
 
 Project Link: [https://github.com/adnanXmacro/Project-Xpark](https://github.com/adnanXmacro/Project-Xpark)
 
-Upstream: [https://github.com/devfahim00/SparkTube](https://github.com/devfahim00/SparkTube)
-
 <div align="center">
 
 <br>
 
-**If you like Open Tube, please consider giving it a ⭐ — it really helps!**
+**If you like OpenTube, please consider giving it a ⭐ — it really helps!**
 
 Made with ❤️ in Bangladesh 🇧🇩
 
